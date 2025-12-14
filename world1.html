@@ -6,7 +6,7 @@
   <style>
     body {
       margin: 0;
-      background: #0b1f12;
+      background: #0b1f12; /* チル夜っぽい色 */
       color: #e0ffe9;
       font-family: sans-serif;
       display: flex;
@@ -22,7 +22,6 @@
       line-height: 1.5em;
       max-width: 600px;
       text-align: left;
-      cursor: pointer;
     }
     .button {
       margin-top: 20px;
@@ -146,10 +145,15 @@
       if(storyIndex < currentLines.length - 1){
         storyIndex++;
         storyDiv.textContent = currentLines[storyIndex];
-      } else {
-        // セリフ終わったら何もしない
       }
     }
+
+    // 画面全体タップでセリフ進む
+    document.body.addEventListener('click', (e)=>{
+      if(e.target !== songBtn){ // ボタンクリックは除外
+        nextLine();
+      }
+    });
 
     songBtn.addEventListener('click', () => {
       songCount++;
@@ -167,9 +171,6 @@
         updateCurrentLines(storyData[1].text);
       }
     });
-
-    // 画面タップで次のセリフ
-    storyDiv.addEventListener('click', nextLine);
 
     function showComments() {
       const comment = commentList[Math.floor(Math.random() * commentList.length)];
