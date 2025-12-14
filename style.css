@@ -8,7 +8,6 @@ body {
     min-height: 100vh;
     margin: 0;
     transition: background-color 1s ease;
-    /* 視覚的な中心を少し上に移動 */
     padding-bottom: 50px; 
 }
 
@@ -35,7 +34,7 @@ header {
 /* ------------------- */
 #room-view {
     position: relative;
-    height: 300px; /* 高さを少し上げる */
+    height: 300px;
     background-color: #1a1a1a;
     border: 1px solid #444;
     border-radius: 5px;
@@ -49,21 +48,20 @@ header {
     position: absolute;
     transition: all 0.8s ease;
     box-shadow: none;
-    display: none;
+    display: none; /* デフォルトでは非表示 */
 }
 
 /* ------------------- */
 /* デスク (アイソメトリック風の傾き) */
 /* ------------------- */
 #desk {
-    display: block;
-    bottom: 50px; /* 部屋の下から少し持ち上げる */
+    display: block; /* ★表示を強制★ */
+    bottom: 50px;
     left: 0;
     width: 100%;
     height: 40px;
     background-color: #4a3c3c;
     z-index: 10;
-    /* 斜め上から見下ろす傾き */
     transform: perspective(400px) rotateX(20deg) skewX(-10deg); 
     transform-origin: bottom;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
@@ -73,10 +71,10 @@ header {
 /* プレイヤーのドット絵表現 (影絵) - 位置と傾きを調整 */
 /* ------------------- */
 #player {
-    display: block;
-    bottom: 70px; /* デスクの奥、椅子の上 */
+    display: block; /* ★表示を強制★ */
+    bottom: 70px;
     left: 50%;
-    transform: translateX(-50%) perspective(400px) rotateX(10deg); /* デスクに合わせる傾き */
+    transform: translateX(-50%) perspective(400px) rotateX(10deg);
     width: 80px;
     height: 100px;
     background-color: transparent;
@@ -106,30 +104,30 @@ header {
     border-radius: 5px 5px 0 0;
 }
 
-/* 🤚 キーボードを叩く手の表現 (デスクの上) - 傾きを付けてデスクにフィットさせる */
+/* 🤚 キーボードを叩く手の表現 (デスクの上) */
 #room-view::before {
     content: ''; 
     position: absolute;
-    bottom: 55px; /* デスクの上に乗る位置 */
+    bottom: 55px;
     left: 42%;
     width: 15px;
     height: 3px; 
     background-color: #333; 
     z-index: 20;
     border: 1px solid #222;
-    transform: perspective(400px) rotateX(20deg) skewX(-10deg); /* デスクと同じ傾き */
+    transform: perspective(400px) rotateX(20deg) skewX(-10deg);
 }
 #room-view::after {
     content: ''; 
     position: absolute;
-    bottom: 55px; /* デスクの上に乗る位置 */
+    bottom: 55px;
     left: 55%;
     width: 15px; 
     height: 3px; 
     background-color: #333;
     z-index: 20;
     border: 1px solid #222;
-    transform: perspective(400px) rotateX(20deg) skewX(-10deg); /* デスクと同じ傾き */
+    transform: perspective(400px) rotateX(20deg) skewX(-10deg);
 }
 
 /* ------------------- */
@@ -139,10 +137,9 @@ header {
     background-color: #1a1a1a;
 }
 .stage-0 #pc {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 80px;
     left: 50%;
-    /* モニターに立体感を与える傾き */
     transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg); 
     transform-origin: center bottom;
     width: 80px;
@@ -161,7 +158,7 @@ header {
 }
 /* 外付けモニター追加 */
 .stage-1 #monitor-main {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 90px;
     left: 50%;
     transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
@@ -174,17 +171,18 @@ header {
 }
 /* 付箋が画面端に1枚 */
 .stage-1 #post-it {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 110px;
     left: calc(50% + 50px);
     width: 15px;
     height: 15px;
     background-color: #ffeb3b; 
     z-index: 13;
-    transform: perspective(400px) rotateX(15deg) skewX(-5deg); /* 傾きを合わせる */
+    transform: perspective(400px) rotateX(15deg) skewX(-5deg);
 }
 /* ノートPCはサブとして残るが小さくなる */
 .stage-1 #pc {
+    display: block; /* ★表示を強制★ */
     bottom: 75px;
     left: 35%; 
     transform: perspective(400px) rotateX(15deg) skewX(-5deg);
@@ -204,21 +202,21 @@ header {
 }
 /* MIDIキーボード追加 */
 .stage-2 #keyboard {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 50px;
     left: 65%;
     width: 80px;
     height: 25px;
     background: repeating-linear-gradient(90deg, #fff 0, #fff 10%, #111 10%, #111 20%);
     z-index: 15;
-    transform: perspective(400px) rotateX(20deg) skewX(-10deg); /* デスクに合わせる傾き */
+    transform: perspective(400px) rotateX(20deg) skewX(-10deg);
 }
 /* オーディオIF追加 */
 .stage-2 #audio-if {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 50px;
     left: 50%;
-    transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg); /* デスクに合わせる傾き */
+    transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg);
     width: 40px;
     height: 25px;
     background-color: #222;
@@ -228,7 +226,7 @@ header {
 }
 /* モニターはメインとして残る */
 .stage-2 #monitor-main {
-    /* 位置変更なし */
+    display: block;
 }
 
 
@@ -244,7 +242,7 @@ header {
     transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
 }
 .stage-3 #monitor-sub {
-    display: block;
+    display: block; /* ★表示を強制★ */
     bottom: 90px;
     left: 60%;
     transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
@@ -257,8 +255,8 @@ header {
 }
 /* マイクアームとマイク */
 .stage-3 #mic-arm {
-    display: block;
-    bottom: 180px; /* 位置を上げる */
+    display: block; /* ★表示を強制★ */
+    bottom: 180px;
     left: 75%;
     width: 3px;
     height: 50px;
@@ -279,15 +277,15 @@ header {
 }
 /* 観葉植物（チル要素） */
 .stage-3 #plant {
-    display: block;
-    bottom: 60px; /* デスクの横 */
+    display: block; /* ★表示を強制★ */
+    bottom: 60px;
     left: 10%;
     width: 20px;
     height: 40px;
     background-color: #0c0;
     border-bottom: 5px solid #630;
     z-index: 15;
-    transform: perspective(400px) rotateX(15deg) skewX(-5deg); /* 傾きを合わせる */
+    transform: perspective(400px) rotateX(15deg) skewX(-5deg);
 }
 
 
@@ -299,7 +297,7 @@ header {
 }
 /* 夜景が見える窓 (壁の背景として) */
 .stage-4 #window {
-    display: block;
+    display: block; /* ★表示を強制★ */
     top: 0;
     left: 0;
     width: 100%;
@@ -317,34 +315,34 @@ header {
 
 /* スピーカー増設 (左右に追加) */
 .stage-4 #speaker-left {
-    display: block;
-    bottom: 75px; /* デスク横に配置 */
+    display: block; /* ★表示を強制★ */
+    bottom: 75px;
     left: 20%;
     width: 25px;
     height: 50px;
     background-color: #1a1a1a;
     border: 1px solid #333;
     z-index: 12;
-    transform: perspective(400px) rotateX(15deg) skewX(-5deg); /* 傾きを合わせる */
+    transform: perspective(400px) rotateX(15deg) skewX(-5deg);
 }
 .stage-4 #speaker-right {
-    display: block;
-    bottom: 75px; /* デスク横に配置 */
+    display: block; /* ★表示を強制★ */
+    bottom: 75px;
     left: 80%;
     width: 25px;
     height: 50px;
     background-color: #1a1a1a;
     border: 1px solid #333;
     z-index: 12;
-    transform: perspective(400px) rotateX(15deg) skewX(-5deg); /* 傾きを合わせる */
+    transform: perspective(400px) rotateX(15deg) skewX(-5deg);
 }
 
 /* 椅子グレードアップ */
 .stage-4 #chair {
-    display: block;
-    bottom: 50px; /* デスクと同じ高さの床に */
+    display: block; /* ★表示を強制★ */
+    bottom: 50px;
     left: 50%;
-    transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg); /* 傾きを合わせる */
+    transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg);
     width: 60px;
     height: 120px;
     background-color: #444;
