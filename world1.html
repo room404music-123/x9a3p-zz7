@@ -2,108 +2,155 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>WORLD1 青き地球の小さな国</title>
+  <title>WORLD1</title>
   <style>
     body {
       margin: 0;
-      background: #0b1f3a; /* 青みのある部屋 */
-      color: #e0f0ff;
+      background: #0b1f12;
+      color: #e0ffe9;
       font-family: sans-serif;
-      position: relative;
-      height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      height: 100vh;
+      overflow: hidden;
+      padding: 20px;
     }
-    .box {
-      text-align: center;
-      opacity: 0.9;
-    }
-    a {
-      display: inline-block;
+    .story {
       margin-top: 20px;
-      color: #a0d0ff;
-      text-decoration: none;
-      border: 1px solid #a0d0ff;
-      padding: 8px 16px;
+      font-size: 18px;
+      line-height: 1.5em;
+      max-width: 600px;
+      text-align: left;
     }
-    #produceBtn {
+    .button {
+      margin-top: 20px;
       padding: 10px 20px;
-      margin-top: 50px;
+      font-size: 16px;
       cursor: pointer;
+      background: #1f3f27;
+      color: #e0ffe9;
+      border: none;
+      border-radius: 5px;
     }
-    #status {
+    .comments {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      text-align: right;
-    }
-    #comments {
-      position: absolute;
-      bottom: 10px;
       left: 10px;
-      max-width: 250px;
-      color: #a0d0ff;
+      bottom: 20px;
+      width: 300px;
+      font-size: 16px;
+      color: #a0ffc0;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>WORLD1 青き地球の小さな国</h1>
-    <p>DTM活動を始めた。</p>
-    <a href="index.html">WORLD2に戻る</a>
+  <h1>WORLD1</h1>
+  <div>ファン数: <span id="fans">0</span></div>
+  <div class="story" id="story">
+    最近、DTMというものに興味がある。
+とりあえず小さなノートパソコンとヘッドホンを買った。
+今日から私もクリエイター.....？
+浮かれる前に一曲作ってみよう。
   </div>
-
-  <!-- UI -->
-  <div id="status">
-    ファン: <span id="fans">0</span><br>
-    お金: $<span id="money">0</span>
-  </div>
-
-  <div style="text-align:center;">
-    <button id="produceBtn">楽曲制作</button>
-  </div>
-
-  <div id="comments"></div>
-
+  <button class="button" id="createSong">楽曲制作</button>
+  <div class="comments" id="comments"></div>
   <script>
-    let fans = 0;
-    let money = 0;
-    const fansEl = document.getElementById("fans");
-    const moneyEl = document.getElementById("money");
-    const commentsEl = document.getElementById("comments");
-    const produceBtn = document.getElementById("produceBtn");
+    let fanCount = 0;
+    let songCount = 0;
 
-    const sampleComments = [
-      "すごい！楽しみです。",
-      "応援してます！",
-      "新曲まだ？",
-      "もっと人気になれ！",
-      "何作ってるの？"
+    const storyData = [
+      { fans: 0, text: `最近、DTMというものに興味がある。
+とりあえず小さなノートパソコンとヘッドホンを買った。
+今日から私もクリエイター.....？
+浮かれる前に一曲作ってみよう。`},
+      { fans: 1, text: `....。
+よく寝たな。
+あ、
+パソコン、閉じていなかったのか。
+電気代が高くなりそうだな。
+とりあえず閉じておこう。
+....一件のコメント？
+「めちゃくちゃ好きです！センスあると思います！」
+ああ、私の曲を聴いてくれる人は、いたんだ。
+やる気が湧いてくる。
+私にとって一番最初のこのファンを、絶対大事にしよう。`},
+      { fans: 10, text: `ふと、DTMを始める前の事を考える。
+これまで見てきた配信者は皆ファンが数十万人いた。
+でも、ファン数10人に喜んでいる自分がいる。
+自然に笑みが溢れる。
+これが、古参ってやつか。`},
+      { fans: 100, text: `いつのまにかファンの数が増えていた。
+これだけの人が私の音楽を愛してくれている...。
+とても感慨深い。
+ここまで来たらもう止まれない。
+折角だから目標を決めてみよう。
+次の目標は...`},
+      { fans: 1000, text: `1000という数字は大きくもあり小さくもある。
+全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。
+1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。
+大丈夫。
+これは趣味なのだから。
+次の目標は...`},
+      { fans: 10000, text: `最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。
+あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。
+楽しい。ワクワクする。
+ここからどうなるか楽しみだ。
+次の目標は...`},
+      { fans: 50000, text: `最近ファンが増えない。
+ある配信者の言葉を思い出す。
+どんな活動者も勢いがあるのは最初だけ。
+あとは廃れていくのみなのだ。
+現実を突きつけられると少し悲しくなる。
+あれ。
+私は何のためにこの活動を始めたのか。
+趣味じゃなかったのか？
+趣味なら、何も心配することは無いはずなのに。
+私は承認欲求の塊になってしまったようだ。
+....転生。
+一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。
+これで新しい視聴者を得られるなら。
+このアカウントを消して新しい音楽家になれば。
+...。
+目標を達成できるかもしれない。`}
     ];
 
-    let currentComments = [];
+    const commentList = [
+      "応援してます！",
+      "最高の曲でした！",
+      "もっと聴きたい！",
+      "センスある！",
+      "毎日聴いてます！"
+    ];
 
-    function updateComments() {
-      commentsEl.innerHTML = currentComments.join("<br>");
+    const storyDiv = document.getElementById('story');
+    const fansDiv = document.getElementById('fans');
+    const commentsDiv = document.getElementById('comments');
+    const songBtn = document.getElementById('createSong');
+
+    songBtn.addEventListener('click', () => {
+      songCount++;
+      fanCount += Math.floor(Math.random() * 10) + 1; // 1〜10人増える
+      updateStory();
+    });
+
+    function updateStory() {
+      fansDiv.textContent = fanCount;
+      let currentStory = storyData[0].text;
+      for(let i=0; i<storyData.length; i++){
+        if(fanCount >= storyData[i].fans){
+          currentStory = storyData[i].text;
+        }
+      }
+      storyDiv.textContent = currentStory;
     }
 
-    produceBtn.onclick = () => {
-      fans += Math.floor(Math.random() * 10) + 1;
-      money += Math.floor(Math.random() * 100) + 50;
-      fansEl.textContent = fans;
-      moneyEl.textContent = money;
+    function showComments() {
+      const comment = commentList[Math.floor(Math.random() * commentList.length)];
+      commentsDiv.textContent = comment;
+    }
 
-      const comment = sampleComments[Math.floor(Math.random() * sampleComments.length)];
-      currentComments.push(comment);
-      updateComments();
-
-      // 5秒後に先頭のコメントを削除
-      setTimeout(() => {
-        currentComments.shift();
-        updateComments();
-      }, 5000);
-    };
+    setInterval(showComments, 5000); // 5秒ごとにコメント切替
   </script>
 </body>
 </html>
