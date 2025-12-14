@@ -21,7 +21,7 @@ const storyFlags = {
     fan10000: false, 
     fan50000_pre: false,
     
-    // コメント制御用の新しいフラグ
+    // コメント制御用のフラグ
     commentsStarted: false,
     startCommentsAfterEnd: false
 };
@@ -142,6 +142,7 @@ function advanceDialog() {
         // ストーリー終了（モーダル解除）
         isStoryActive = false;
         document.getElementById('produce-music-button').disabled = false; // ボタン有効化
+        
         document.getElementById('dialog-text').textContent = "タップしてセリフを表示"; 
         
         // --- コメントストリームの開始チェック（ファン1のストーリーが完了したか） ---
@@ -207,14 +208,22 @@ function produceMusic() {
         
         updateStats();
         
-        // 制作完了時の独り言（演出）
+        // 制作完了時の独り言（演出）を表示
         const endDialogKey = STORY_DATA.production_end[Math.floor(Math.random() * STORY_DATA.production_end.length)];
         document.getElementById('dialog-text').textContent = endDialogKey;
         
+        // ボタンを有効化し、待機メッセージに戻す
         document.getElementById('produce-music-button').disabled = false;
         
-        // 制作後のメインストーリーチェック
-        checkAndDisplayStory(); 
+        // 0.5秒の短い遅延の後、ファン数ストーリーのチェックに移行
+        // これにより「……悪くない。」という独り言が消えることなく、すぐに次のストーリーが上書きされる
+        setTimeout(() => {
+             // 待機メッセージに戻す
+            document.getElementById('dialog-text').textContent = "タップしてセリフを表示";
+            // 制作後のメインストーリーチェック
+            checkAndDisplayStory(); 
+        }, 500); 
+
     }, 1500); // 1.5秒待機
 }
 
@@ -228,8 +237,6 @@ function reincarnate() {
     fans = 0;
     money = 0;
     productionCount = 0;
-    
-    // コメントは引き継がれるが、リセットの必要はないため commentsStarted はそのまま
     
     // ストーリーフラグをリセット（最終イベント以外）
     for (let key in storyFlags) {
@@ -270,8 +277,6 @@ function initGame() {
     // 転生ボタンにreincarnate関数を割り当てる
     document.getElementById('reincarnate-button').onclick = reincarnate;
     
-    // コメントストリームはファン1のストーリー後に開始されるため、ここでは呼ばない。
-
     updateStats(); 
     startStory('initial'); // 最初のセリフを表示
 }
