@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>WORLD1</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b1f12; /* チル夜っぽい暗め */
+      color: #e0ffe9;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+    .story {
+      margin-top: 20px;
+      font-size: 18px;
+      line-height: 1.5em;
+      max-width: 600px;
+      text-align: left;
+    }
+    .button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #1f3f27;
+      color: #e0ffe9;
+      border: none;
+      border-radius: 5px;
+    }
+    .comments {
+      position: absolute;
+      left: 10px;
+      bottom: 20px;
+      width: 300px;
+      font-size: 16px;
+      color: #a0ffc0;
+    }
+    .status {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>WORLD1</h1>
+  <div class="status">
+    ファン数: <span id="fans">0</span>　|　お金: $<span id="money">0</span>
+  </div>
+  <div class="story" id="story">
+最近、DTMというものに興味がある。
+とりあえず小さなノートパソコンとヘッドホンを買った。
+今日から私もクリエイター.....？
+浮かれる前に一曲作ってみよう。
+  </div>
+  <button class="button" id="createSong">楽曲制作</button>
+  <div id="world2BtnContainer"></div>
+  <div class="comments" id="comments"></div>
+
+  <script>
+    let fanCount = 0;
+    let money = 0;
+    let songCount = 0;
+    let storyIndex = 0;
+    let currentLines = [];
+
+    const storyData = [
+      { type: "song", text: `意外とパソコンの操作が難しかった。
+某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。
+とりあえず今日は寝よう。`, fans:0, money:0},
+      { type: "song", text: `曲作りにも慣れて来たな。
+ファン数も順調に増えている。
+ご褒美に旅行でもするか。`, fans:0, money:0},
+      { type: "fan", fans: 1, text: `....。
+よく寝たな。
+あ、
+パソコン、閉じていなかったのか。
+電気代が高くなりそうだな。
+とりあえず閉じておこう。
+....一件のコメント？
+「めちゃくちゃ好きです！センスあると思います！」
+ああ、私の曲を聴いてくれる人は、いたんだ。
+やる気が湧いてくる。
+私にとって一番最初のこのファンを、絶対大事にしよう。`, money:0},
+      { type: "fan", fans: 10, text: `ふと、DTMを始める前の事を考える。
+これまで見てきた配信者は皆ファンが数十万人いた。
+でも、ファン数10人に喜んでいる自分がいる。
+自然に笑みが溢れる。
+これが、古参ってやつか。`, money:0},
+      { type: "fan", fans: 100, text: `いつのまにかファンの数が増えていた。
+これだけの人が私の音楽を愛してくれている...。
+とても感慨深い。
+ここまで来たらもう止まれない。
+折角だから目標を決めてみよう。
+次の目標は...`, money:100},
+      { type: "fan", fans: 1000, text: `1000という数字は大きくもあり小さくもある。
+全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。
+1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。
+大丈夫。
+これは趣味なのだから。
+次の目標は...`, money:500},
+      { type: "fan", fans: 10000, text: `最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。
+あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。
+楽しい。ワクワクする。
+ここからどうなるか楽しみだ。
+次の目標は...`, money:1000},
+      { type: "fan", fans: 50000, text: `最近ファンが増えない。
+ある配信者の言葉を思い出す。
+どんな活動者も勢いがあるのは最初だけ。
+あとは廃れていくのみなのだ。
+現実を突きつけられると少し悲しくなる。
+あれ。
+私は何のためにこの活動を始めたのか。
+趣味じゃなかったのか？
+趣味なら、何も心配することは無いはずなのに。
+私は承認欲求の塊になってしまったようだ。
+....転生。
+一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。
+これで新しい視聴者を得られるなら。
+このアカウントを消して新しい音楽家になれば。
+...。
+目標を達成できるかもしれない。`, money:5000}
+    ];
+
+    const commentList = [
+      "応援してます！",
+      "最高の曲でした！",
+      "もっと聴きたい！",
+      "センスある！",
+      "毎日聴いてます！"
+    ];
+
+    const storyDiv = document.getElementById('story');
+    const fansDiv = document.getElementById('fans');
+    const moneyDiv = document.getElementById('money');
+    const commentsDiv = document.getElementById('comments');
+    const songBtn = document.getElementById('createSong');
+    const world2Container = document.getElementById('world2BtnContainer');
+
+    function updateCurrentLines(text){
+      currentLines = text.split("\n");
+      storyIndex = 0;
+      storyDiv.textContent = currentLines[storyIndex];
+    }
+
+    function nextLine(){
+      if(storyIndex < currentLines.length - 1){
+        storyIndex++;
+        storyDiv.textContent = currentLines[storyIndex];
+      }
+    }
+
+    document.body.addEventListener('click', (e)=>{
+      if(e.target !== songBtn && e.target !== world2Container){
+        nextLine();
+      }
+    });
+
+    function handleStory() {
+      // 楽曲制作優先
+      let storyObj;
+      if(songCount <= 2){
+        storyObj = storyData[songCount-1]; 
+      } else {
+        // ファン数に応じて
+        storyObj = storyData.find(s => s.type === "fan" && fanCount >= s.fans);
+      }
+      if(storyObj){
+        fanCount += storyObj.fans || 0;
+        money += storyObj.money || 0;
+        fansDiv.textContent = fanCount;
+        moneyDiv.textContent = money;
+        updateCurrentLines(storyObj.text);
+      }
+
+      // WORLD2ボタン表示
+      if(fanCount >= 50000 && !document.getElementById('world2Btn')){
+        const btn = document.createElement('button');
+        btn.id = 'world2Btn';
+        btn.className = 'button';
+        btn.textContent = "WORLD2 解放！";
+        btn.onclick = ()=>{ alert("WORLD2に移動（まだ未実装）"); };
+        world2Container.appendChild(btn);
+      }
+    }
+
+    songBtn.addEventListener('click', ()=>{
+      songCount++;
+      handleStory();
+    });
+
+    function showComments() {
+      const comment = commentList[Math.floor(Math.random() * commentList.length)];
+      commentsDiv.textContent = comment;
+    }
+    setInterval(showComments, 5000);
+
+    // 最初のストーリー設定
+    updateCurrentLines(document.querySelector('.story').textContent);
+  </script>
+</body>
+</html>
