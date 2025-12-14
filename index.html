@@ -16,6 +16,71 @@
         </header>
 
         <div id="room-view">
+            <div id="room-view">
+            <div id="player"></div> 
+            
+            <div id="window"></div>
+            <div id="desk"></div>
+            ```
+
+---
+
+### 2. 🎨 `style.css` の修正（プレイヤーの見た目定義）
+
+`style.css` は、**見た目（色や形）**を定義するファイルだ。
+
+#### 変更内容
+
+新しく追加した `#player` の形や色、位置をドット絵風に指定するCSSコードを追加する。
+
+#### 貼り付け場所
+
+**`style.css`** を開き、一番下（最終行）に、以下のコードブロックを**追記**してね。
+
+```css
+/* ------------------- */
+/* プレイヤーのドット絵表現 (影絵) */
+/* ------------------- */
+#player {
+    position: absolute;
+    bottom: 30px; /* 椅子の上、デスクの奥 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 100px;
+    background-color: transparent; /* ベースは透明 */
+    z-index: 6; /* 椅子とデスクの間 */
+}
+
+/* 頭部 */
+#player::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25px;
+    width: 30px;
+    height: 30px;
+    background-color: #333; /* 影 */
+    border-radius: 50%; /* 丸い頭 */
+    box-shadow: 0 0 0 1px #222; /* ドット絵風の境界線 */
+}
+
+/* 体（フードや服の表現） */
+#player::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    width: 60px;
+    height: 75px;
+    background-color: #333;
+    border-radius: 5px 5px 0 0;
+}
+
+/* Stage 4 の椅子（#chair）より手前に表示されるように調整が必要 */
+.stage-4 #player {
+    z-index: 10;
+}
             <div id="window"></div>
             <div id="desk"></div>
             <div id="chair"></div>
