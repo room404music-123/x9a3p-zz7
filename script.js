@@ -28,6 +28,7 @@ const storyFlags = {
 
 // --- セリフデータ (タップで1行ずつ進むよう、配列でデータ化) ---
 const STORY_DATA = {
+    // これらのセリフが「STORY」として表示されます
     initial: [ "最近、DTMというものに興味がある。", "とりあえず小さなノートパソコンとヘッドホンを買った。", "今日から私もクリエイター.....？", "浮かれる前に一曲作ってみよう。" ],
     afterFirstProduction: [ "意外とパソコンの操作が難しかった。", "某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。", "とりあえず今日は寝よう。" ],
     fan1: [ "....。", "よく寝たな。", "あ、", "パソコン、閉じていなかったのか。", "電気代が高くなりそうだな。", "とりあえず閉じておこう。", "....一件のコメント？", "「めちゃくちゃ好きです！センスあると思います！」", "ああ、私の曲を聴いてくれる人は、いたんだ。", "やる気が湧いてくる。", "私にとって一番最初のこのファンを、絶対大事にしよう。" ],
@@ -46,6 +47,7 @@ const STORY_DATA = {
         "新しく始めよう。",
         "【[新しく始める] ボタンが解放されました】"
     ],
+    // 制作中の独り言は「STORY」として扱わないため、別途変数に保持
     production_start: [ "我ながら、いいアイデアが浮かんだ。早速、楽曲制作に取り掛かろう。", "今日は音が逃げない気がする。", "静かな夜だ。作るなら今。" ],
     production_end: [ "……悪くない。", "これは、ちゃんと届きそうだ。", "もう一度だけ、聴き直す。" ]
 };
@@ -57,10 +59,18 @@ const COMMENTS = [
     "この人の影響でDTM始めた"
 ];
 
+// DOM要素のキャッシュ
+const dialogTextEl = document.getElementById('dialog-text');
+const storyMarkerEl = document.getElementById('story-marker');
+const produceButtonEl = document.getElementById('produce-music-button');
+const fanCountEl = document.getElementById('fan-count');
+const moneyCountEl = document.getElementById('money-count');
+const reincarnateButtonEl = document.getElementById('reincarnate-button');
+
 // --- ファン数とお金の表示、部屋の進化を更新する関数 ---
 function updateStats() {
-    document.getElementById('fan-count').textContent = fans.toLocaleString();
-    document.getElementById('money-count').textContent = money.toLocaleString();
+    fanCountEl.textContent = fans.toLocaleString();
+    moneyCountEl.textContent = money.toLocaleString();
     
     // 部屋の進化（CSSクラスの切り替え）
     let stage = 0;
@@ -72,9 +82,9 @@ function updateStats() {
     
     // 転生ボタンの表示制御
     if (storyFlags.fan50000_pre) {
-        document.getElementById('reincarnate-button').style.display = 'block';
+        reincarnateButtonEl.style.display = 'block';
     } else {
-        document.getElementById('reincarnate-button').style.display = 'none';
+        reincarnateButtonEl.style.display = 'none';
     }
 }
 
@@ -109,12 +119,15 @@ function startStory(storyKey) {
     if (isStoryActive) return; 
 
     isStoryActive = true;
-    document.getElementById('produce-music-button').disabled = true; // ボタン無効化
+    produceButtonEl.disabled = true; // ボタン無効化
+
+    // ★追加：STORYマーカーを表示★
+    storyMarkerEl.style.display = 'block';
 
     currentDialog = STORY_DATA[storyKey];
     currentLineIndex = 0;
     
-    document.getElementById('dialog-text').textContent = currentDialog[currentLineIndex];
+    dialogTextEl.textContent = currentDialog[currentLineIndex];
     storyFlags[storyKey] = true; 
 
     // 初回制作でファン1を確実にする処理
@@ -137,13 +150,16 @@ function advanceDialog() {
 
     if (currentLineIndex < currentDialog.length) {
         // 次の行を表示
-        document.getElementById('dialog-text').textContent = currentDialog[currentLineIndex];
+        dialogTextEl.textContent = currentDialog[currentLineIndex];
     } else {
         // ストーリー終了（モーダル解除）
         isStoryActive = false;
-        document.getElementById('produce-music-button').disabled = false; // ボタン有効化
+        produceButtonEl.disabled = false; // ボタン有効化
         
-        document.getElementById('dialog-text').textContent = "タップしてセリフを表示"; 
+        // ★追加：STORYマーカーを非表示★
+        storyMarkerEl.style.display = 'none'; 
+        
+        dialogTextEl.textContent = "タップしてセリフを表示"; 
         
         // --- コメントストリームの開始チェック（ファン1のストーリーが完了したか） ---
         if (storyFlags.startCommentsAfterEnd) {
@@ -192,10 +208,10 @@ function produceMusic() {
 
     // 制作開始時の独り言（演出）
     const startDialogKey = STORY_DATA.production_start[Math.floor(Math.random() * STORY_DATA.production_start.length)];
-    document.getElementById('dialog-text').textContent = startDialogKey;
+    dialogTextEl.textContent = startDialogKey;
 
     // 制作中を表すためにボタンを一時的に無効化
-    document.getElementById('produce-music-button').disabled = true;
+    produceButtonEl.disabled = true;
 
     // 1.5秒後に制作完了のロジックを実行
     setTimeout(() => {
@@ -210,16 +226,15 @@ function produceMusic() {
         
         // 制作完了時の独り言（演出）を表示
         const endDialogKey = STORY_DATA.production_end[Math.floor(Math.random() * STORY_DATA.production_end.length)];
-        document.getElementById('dialog-text').textContent = endDialogKey;
+        dialogTextEl.textContent = endDialogKey;
         
-        // ボタンを有効化し、待機メッセージに戻す
-        document.getElementById('produce-music-button').disabled = false;
+        // ボタンを有効化
+        produceButtonEl.disabled = false;
         
         // 0.5秒の短い遅延の後、ファン数ストーリーのチェックに移行
-        // これにより「……悪くない。」という独り言が消えることなく、すぐに次のストーリーが上書きされる
         setTimeout(() => {
              // 待機メッセージに戻す
-            document.getElementById('dialog-text').textContent = "タップしてセリフを表示";
+            dialogTextEl.textContent = "タップしてセリフを表示";
             // 制作後のメインストーリーチェック
             checkAndDisplayStory(); 
         }, 500); 
@@ -256,13 +271,13 @@ function reincarnate() {
         reincarnateDialog = "私は、まだ作れる。";
     }
     
-    document.getElementById('dialog-text').textContent = "Re:Start... " + reincarnateDialog;
+    dialogTextEl.textContent = "Re:Start... " + reincarnateDialog;
     
     // 部屋の状態を初期に戻す
     document.body.className = 'stage-0';
     
     // 転生ボタンを非表示に戻す
-    document.getElementById('reincarnate-button').style.display = 'none';
+    reincarnateButtonEl.style.display = 'none';
 
     updateStats(); 
     startStory('initial'); // 最初のセリフに戻る
@@ -270,12 +285,10 @@ function reincarnate() {
 
 // --- 初期化処理 ---
 function initGame() {
-    // 楽曲制作ボタンにproduceMusic関数を割り当てる
-    document.getElementById('produce-music-button').onclick = produceMusic;
-    // ダイアログボックスにタップイベントを割り当てる
+    // DOM要素のイベントリスナー設定
+    produceButtonEl.onclick = produceMusic;
     document.getElementById('dialog-box').onclick = advanceDialog; 
-    // 転生ボタンにreincarnate関数を割り当てる
-    document.getElementById('reincarnate-button').onclick = reincarnate;
+    reincarnateButtonEl.onclick = reincarnate;
     
     updateStats(); 
     startStory('initial'); // 最初のセリフを表示
