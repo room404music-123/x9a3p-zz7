@@ -38,16 +38,24 @@ const STORY_DATA = {
     fan1000: [ "1000という数字は大きくもあり小さくもある。", "全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。", "1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。", "大丈夫。これは趣味なのだから。", "次の目標は..." ],
     fan10000: [ "最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。", "楽しい。ワクワクする。", "ここからどうなるか楽しみだ。", "次の目標は..." ],
     fan50000_pre: [ 
-        "最近ファンが増えない。ある配信者の言葉を思い出す。", 
-        "どんな活動者も勢いがあるのは最初だけ。あとは廃れていくのみなのだ。", 
+        "最近ファンが増えない。", 
+        "ある配信者の言葉を思い出す。", 
+        "どんな活動者も勢いがあるのは最初だけ。",
+        "あとは廃れていくのみなのだ。",
         "現実を突きつけられると少し悲しくなる。", 
-        "あれ。私は何のためにこの活動を始めたのか。趣味じゃなかったのか？", 
+        "あれ。",
+        "私は何のためにこの活動を始めたのか。",
+        "趣味じゃなかったのか？",
+        "趣味なら、何も心配することは無いはずなのに。",
         "私は承認欲求の塊になってしまったようだ。", 
-        "……ファン数は、頭打ちってとこか。",
-        "新しく始めよう。",
+        "....転生。",
+        "一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。",
+        "これで新しい視聴者を得られるなら。",
+        "このアカウントを消して新しい音楽家になれば。",
+        "...",
+        "目標を達成できるかもしれない。",
         "【[新しく始める] ボタンが解放されました】"
     ],
-    // 制作中の独り言は「STORY」として扱わないため、別途変数に保持
     production_start: [ "我ながら、いいアイデアが浮かんだ。早速、楽曲制作に取り掛かろう。", "今日は音が逃げない気がする。", "静かな夜だ。作るなら今。" ],
     production_end: [ "……悪くない。", "これは、ちゃんと届きそうだ。", "もう一度だけ、聴き直す。" ]
 };
@@ -74,9 +82,13 @@ function updateStats() {
     
     // 部屋の進化（CSSクラスの切り替え）
     let stage = 0;
-    if (fans >= 10000) stage = 3; 
-    else if (fans >= 1000) stage = 2; 
-    else if (fans >= 100) stage = 1;
+    
+    // ★修正箇所：新しいステージ判定ロジックを適用
+    if (fans >= 2000000) stage = 4;        // 200万人以上
+    else if (fans >= 1000000) stage = 3;   // 100万人以上
+    else if (fans >= 100000) stage = 2;    // 10万人以上
+    else if (fans >= 10000) stage = 1;     // 1万人以上
+    // 1万人未満は stage 0 のまま
 
     document.body.className = `stage-${stage}`;
     
@@ -121,7 +133,7 @@ function startStory(storyKey) {
     isStoryActive = true;
     produceButtonEl.disabled = true; // ボタン無効化
 
-    // ★追加：STORYマーカーを表示★
+    // STORYマーカーを表示
     storyMarkerEl.style.display = 'block';
 
     currentDialog = STORY_DATA[storyKey];
@@ -156,7 +168,7 @@ function advanceDialog() {
         isStoryActive = false;
         produceButtonEl.disabled = false; // ボタン有効化
         
-        // ★追加：STORYマーカーを非表示★
+        // STORYマーカーを非表示
         storyMarkerEl.style.display = 'none'; 
         
         dialogTextEl.textContent = "タップしてセリフを表示"; 
@@ -244,7 +256,9 @@ function produceMusic() {
 
 // --- 転生処理（[新しく始める]ボタンのロジック） ---
 function reincarnate() {
-    if (fans < 50000) return; 
+    // ファン数5万は転生フラグを立てるためのトリガー。実際に転生する際の条件は緩く設定（ファン1以上でOKなど）
+    // 現状のロジックではファン5万でフラグが立つので、ここではフラグがあるかだけ確認
+    if (!storyFlags.fan50000_pre) return; 
 
     reincarnationCount++;
     
@@ -255,18 +269,18 @@ function reincarnate() {
     
     // ストーリーフラグをリセット（最終イベント以外）
     for (let key in storyFlags) {
-        if (key !== 'fan50000_pre' && key !== 'initial' && key !== 'commentsStarted') { 
+        // 'commentsStarted'以外はすべてリセットし、初回セリフは再度表示
+        if (key !== 'commentsStarted') { 
              storyFlags[key] = false;
         }
     }
-    storyFlags.initial = false; // 最初のセリフは再度表示
 
-    // 転生回数に応じたセリフ
+    // 転生回数に応じたセリフ（後の実装のためのプレースホルダー）
     let reincarnateDialog;
     if (reincarnationCount === 1) {
-        reincarnateDialog = "最初からやり直すのも、悪くない。";
+        reincarnateDialog = "アカウントを一新。私は新しく生まれ変わった。";
     } else if (reincarnationCount === 2) {
-        reincarnateDialog = "名前が変わっても、音は残る。";
+        reincarnateDialog = "炎上したって、何度でもやり直せばいい。";
     } else {
         reincarnateDialog = "私は、まだ作れる。";
     }
@@ -291,7 +305,11 @@ function initGame() {
     reincarnateButtonEl.onclick = reincarnate;
     
     updateStats(); 
-    startStory('initial'); // 最初のセリフを表示
+    
+    // 初回ロード時にストーリーが始まるように
+    if (!storyFlags.initial) {
+        startStory('initial'); 
+    }
 }
 
 // ページが完全に読み込まれたらゲームを開始
