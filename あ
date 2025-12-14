@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>WORLD1</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b1f3a; /* 暗めの青 */
+      color: #e0ffe9;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .box {
+      text-align: center;
+      opacity: 0.9;
+      width: 80%;
+      max-width: 600px;
+    }
+    .story {
+      cursor: pointer;
+      user-select: none;
+    }
+    .info {
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+    .comments {
+      position: absolute;
+      left: 0;
+      bottom: 10px;
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .comment {
+      display: inline-block;
+      padding: 0 10px;
+      animation: scroll 5s linear infinite;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <p class="story">(タップしてセリフを表示)</p>
+    <div class="info">
+      <p>ファン: <span id="fans">0</span></p>
+      <p>お金: $<span id="money">0</span></p>
+      <button id="createSong">楽曲制作</button>
+    </div>
+  </div>
+  <div class="comments" id="comments"></div>
+
+  <script>
+    const storyElement = document.querySelector('.story');
+    const fansElement = document.getElementById('fans');
+    const moneyElement = document.getElementById('money');
+    const createSongBtn = document.getElementById('createSong');
+    const commentsDiv = document.getElementById('comments');
+
+    let fans = 1; // 最初のファン1人
+    let money = 0;
+    let songCount = 0;
+
+    // ストーリー配列
+    const songStories = [
+      "最近、DTMというものに興味がある。",
+      "とりあえず小さなノートパソコンとヘッドホンを買った。",
+      "今日から私もクリエイター.....？",
+      "浮かれる前に一曲作ってみよう。",
+      "意外とパソコンの操作が難しかった。",
+      "某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。",
+      "とりあえず今日は寝よう。",
+      "曲作りにも慣れて来たな。",
+      "ご褒美に旅行でもするか。"
+    ];
+
+    const fanStories = [
+      {fans:1, text:"....。\nよく寝たな。\nあ、\nパソコン、閉じていなかったのか。\n電気代が高くなりそうだな。\nとりあえず閉じておこう。\n....一件のコメント？\n「めちゃくちゃ好きです！センスあると思います！」\nああ、私の曲を聴いてくれる人は、いたんだ。\nやる気が湧いてくる。\n私にとって一番最初のこのファンを、絶対大事にしよう。"},
+      {fans:10, text:"ふと、DTMを始める前の事を考える。\nこれまで見てきた配信者は皆ファンが数十万人いた。\nでも、ファン数10人に喜んでいる自分がいる。\n自然に笑みが溢れる。\nこれが、古参ってやつか。"},
+      {fans:100, text:"いつのまにかファンの数が増えていた。\nこれだけの人が私の音楽を愛してくれている...。\nとても感慨深い。\nここまで来たらもう止まれない。\n折角だから目標を決めてみよう。\n次の目標は..."},
+      {fans:1000, text:"1000という数字は大きくもあり小さくもある。\n全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。\n1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。\n大丈夫。\nこれは趣味なのだから。\n次の目標は..."},
+      {fans:10000, text:"最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。\nあまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。\n楽しい。ワクワクする。\nここからどうなるか楽しみだ。\n次の目標は..."},
+      {fans:50000, text:"最近ファンが増えない。\nある配信者の言葉を思い出す。\nどんな活動者も勢いがあるのは最初だけ。\nあとは廃れていくのみなのだ。\n現実を突きつけられると少し悲しくなる。\nあれ。\n私は何のためにこの活動を始めたのか。\n趣味じゃなかったのか？\n趣味なら、何も心配することは無いはずなのに。\n私は承認欲求の塊になってしまったようだ。\n....転生。\n一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。\nこれで新しい視聴者を得られるなら。\nこのアカウントを消して新しい音楽家になれば。\n....\n目標を達成できるかもしれない。"}
+    ];
+
+    let seenFanStories = new Set();
+    let storyIndex = 0;
+    let showingStory = false;
+
+    function showNextStory() {
+      if (showingStory) return;
+      showingStory = true;
+
+      // 楽曲制作ストーリー優先
+      if(storyIndex < songStories.length){
+        storyElement.textContent = songStories[storyIndex];
+        storyIndex++;
+        showingStory = false;
+        return;
+      }
+
+      // ファンストーリー優先処理
+      for (let story of fanStories){
+        if(fans >= story.fans && !seenFanStories.has(story.fans)){
+          storyElement.textContent = story.text;
+          seenFanStories.add(story.fans);
+          showingStory = false;
+          return;
+        }
+      }
+
+      storyElement.textContent = "(タップしてセリフを表示)";
+      showingStory = false;
+    }
+
+    storyElement.addEventListener('click', showNextStory);
+
+    createSongBtn.addEventListener('click', () => {
+      if(showingStory) return; // ストーリー表示中は押せない
+      songCount++;
+      money += 100;
+      if(songCount === 1) fans = 1;
+      else fans += Math.floor(Math.random()*3)+1;
+      fansElement.textContent = fans;
+      moneyElement.textContent = money;
+      showNextStory();
+      addRandomComment();
+    });
+
+    const sampleComments = [
+      "わあ、この曲好き！",
+      "センスあるなぁ！",
+      "リピートしてます",
+      "もっと聴きたい！",
+      "やっぱ天才だわ"
+    ];
+
+    function addRandomComment(){
+      const c = document.createElement('span');
+      c.className = 'comment';
+      c.textContent = sampleComments[Math.floor(Math.random()*sampleComments.length)];
+      commentsDiv.appendChild(c);
+      setTimeout(()=>commentsDiv.removeChild(c),5000);
+    }
+
+    // 初回表示用
+    storyElement.textContent = "(タップしてセリフを表示)";
+    fansElement.textContent = fans;
+    moneyElement.textContent = money;
+
+  </script>
+</body>
+</html>
