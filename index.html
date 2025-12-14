@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>WORLD2</title>
-  <style>
-    body {
-      margin: 0;
-      background: #0b1f12; /* 少し緑がかった暗めの部屋 */
-      color: #e0ffe9;
-      font-family: sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .box {
-      text-align: center;
-      opacity: 0.9;
-    }
-    a {
-      display: inline-block;
-      margin-top: 20px;
-      color: #9fffd0;
-      text-decoration: none;
-      border: 1px solid #9fffd0;
-      padding: 8px 16px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORLD1 - Re:Start Game</title>
+    <link rel="stylesheet" href="style.css"> 
 </head>
-<body>
-  <div class="box">
-    <p>……</p>
-    <p>前も、こんな活動をしていたような。</p>
-    <p>記憶が、ある。</p>
+<body class="stage-0">
+    <div id="game-container">
+        <header>
+            <h1 id="world-title">WORLD1</h1>
+            <div id="stats">
+                ファン数: <span id="fan-count">0</span>　|　お金: $<span id="money-count">0</span>
+            </div>
+        </header>
 
-    <a href="world1.html">活動を始める</a>
-  </div>
+        <div id="room-view">
+            <div id="pc"></div>
+            <div id="monitor"></div>
+            <div id="keyboard"></div>
+            <div id="plant"></div>
+            </div>
+
+        <div id="comment-stream">
+            <p class="comment">静かな夜だ。</p>
+        </div>
+
+        <div id="dialog-box">
+            <p id="dialog-text">(タップしてセリフを表示)</p>
+        </div>
+
+        <div id="actions">
+            <button id="produce-music-button">楽曲制作</button>
+            <button id="reincarnate-button" style="display: none;">[新しく始める]</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
