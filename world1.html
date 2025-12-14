@@ -65,8 +65,10 @@ h1 { margin-top: 0; }
 let fanCount = 0;
 let money = 0;
 let songCount = 0;
-let storyIndex = 0;
+
+const storyQueue = []; // キュー管理
 let currentLines = [];
+let lineIndex = 0;
 let firstTap = true;
 
 // 楽曲制作ストーリー
@@ -107,35 +109,9 @@ const fanStoryData = [
 ここまで来たらもう止まれない。
 折角だから目標を決めてみよう。
 次の目標は...`, money:100, shown:false },
-  { fans:1000, text: `1000という数字は大きくもあり小さくもある。
-全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。
-1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。
-大丈夫。
-これは趣味なのだから。
-次の目標は...`, money:500, shown:false },
-  { fans:10000, text: `最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。
-あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。
-楽しい。ワクワクする。
-ここからどうなるか楽しみだ。
-次の目標は...`, money:1000, shown:false },
-  { fans:50000, text: `最近ファンが増えない。
-ある配信者の言葉を思い出す。
-どんな活動者も勢いがあるのは最初だけ。
-あとは廃れていくのみなのだ。
-現実を突きつけられると少し悲しくなる。
-あれ。
-私は何のためにこの活動を始めたのか。
-趣味じゃなかったのか？
-趣味なら、何も心配することは無いはずなのに。
-私は承認欲求の塊になってしまったようだ。
-....転生。
-一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。
-これで新しい視聴者を得られるなら。
-このアカウントを消して新しい音楽家になれば。
-...。
-目標を達成できるかもしれない。`, money:5000, shown:false }
 ];
 
+// コメント
 const commentList = [
   "応援してます！",
   "最高の曲でした！",
@@ -151,68 +127,60 @@ const commentsDiv = document.getElementById('comments');
 const songBtn = document.getElementById('createSong');
 const world2Container = document.getElementById('world2BtnContainer');
 
-function updateCurrentLines(text){
-  currentLines = text.split("\n");
-  storyIndex = 0;
-  storyDiv.textContent = currentLines[storyIndex];
+function addStoryToQueue(story) {
+  storyQueue.push(story);
 }
 
-function nextLine(){
-  if(storyIndex < currentLines.length - 1){
-    storyIndex++;
-    storyDiv.textContent = currentLines[storyIndex];
+function playNextStory() {
+  if(storyQueue.length === 0) return;
+  const story = storyQueue.shift();
+  fanCount += story.fans;
+  money += story.money;
+  fansDiv.textContent = fanCount;
+  moneyDiv.textContent = money;
+  currentLines = story.text.split("\n");
+  lineIndex = 0;
+  storyDiv.textContent = currentLines[lineIndex];
+}
+
+function nextLine() {
+  if(lineIndex < currentLines.length - 1){
+    lineIndex++;
+    storyDiv.textContent = currentLines[lineIndex];
+  } else {
+    playNextStory();
   }
 }
 
+// 初回タップ
 document.body.addEventListener('click', (e)=>{
   if(firstTap){
     firstTap = false;
     storyDiv.textContent = "";
-    handleStory();
+    addStoryToQueue(songStoryData[songCount]);
+    playNextStory();
   } else if(e.target !== songBtn && e.target !== world2Container){
     nextLine();
   }
 });
 
-function handleStory() {
-  // 楽曲制作ストーリー優先
-  if(songCount < songStoryData.length){
-    let s = songStoryData[songCount];
-    fanCount += s.fans;
-    money += s.money;
-    fansDiv.textContent = fanCount;
-    moneyDiv.textContent = money;
-    updateCurrentLines(s.text);
-  }
-
-  // ファン数ストーリー
-  for(let fs of fanStoryData){
-    if(fanCount >= fs.fans && !fs.shown){
-      money += fs.money;
-      fansDiv.textContent = fanCount;
-      moneyDiv.textContent = money;
-      updateCurrentLines(fs.text);
-      fs.shown = true;
-      break; // 1回だけ表示
-    }
-  }
-
-  // WORLD2ボタン
-  if(fanCount >= 50000 && !document.getElementById('world2Btn')){
-    const btn = document.createElement('button');
-    btn.id = 'world2Btn';
-    btn.className = 'button';
-    btn.textContent = "WORLD2 解放！";
-    btn.onclick = ()=>{ alert("WORLD2に移動（まだ未実装）"); };
-    world2Container.appendChild(btn);
-  }
-}
-
+// 楽曲制作ボタン
 songBtn.addEventListener('click', ()=>{
-  songCount++;
-  handleStory();
+  if(songCount < songStoryData.length){
+    songCount++;
+    addStoryToQueue(songStoryData[songCount - 1]);
+    // ファン数ストーリーでまだ表示していないものがあればキューに追加
+    for(let fs of fanStoryData){
+      if(fanCount >= fs.fans && !fs.shown){
+        addStoryToQueue(fs);
+        fs.shown = true;
+      }
+    }
+    playNextStory();
+  }
 });
 
+// コメント流す
 function showComments() {
   const comment = commentList[Math.floor(Math.random() * commentList.length)];
   commentsDiv.textContent = comment;
