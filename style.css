@@ -125,11 +125,26 @@ header {
     min-height: 50px;
     margin-bottom: 20px;
     border-radius: 5px;
+    position: relative; /* STORYマーカーを絶対配置するために必要 */
 }
 
 #dialog-text {
     margin: 0;
     line-height: 1.6;
+}
+
+/* ★追加：STORYマーカーのスタイル設定★ */
+#story-marker {
+    position: absolute;
+    top: -15px; /* 吹き出しの上に出す */
+    left: 10px;
+    background-color: #007bff;
+    color: white;
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 3px;
+    display: none; /* 初期は非表示 */
 }
 
 /* ------------------- */
