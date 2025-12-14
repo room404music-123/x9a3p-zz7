@@ -11,8 +11,19 @@ let currentLineIndex = 0;
 
 // ストーリーの既読を管理するフラグ（バグ防止と既読管理に使用）
 const storyFlags = {
-    initial: false, afterFirstProduction: false, fan1: false, production10: false, fan10: false, 
-    fan100: false, fan1000: false, fan10000: false, fan50000_pre: false
+    initial: false, 
+    afterFirstProduction: false, 
+    fan1: false, 
+    production10: false, 
+    fan10: false, 
+    fan100: false, 
+    fan1000: false, 
+    fan10000: false, 
+    fan50000_pre: false,
+    
+    // コメント制御用の新しいフラグ
+    commentsStarted: false,
+    startCommentsAfterEnd: false
 };
 
 // --- セリフデータ (タップで1行ずつ進むよう、配列でデータ化) ---
@@ -69,12 +80,9 @@ function updateStats() {
 
 // --- コメントをランダムに流す関数 ---
 function addRandomComment() {
-    if (isStoryActive) return;
-
     const commentEl = document.createElement('p');
     const randomComment = COMMENTS[Math.floor(Math.random() * COMMENTS.length)];
     
-    // ファン数に応じてコメントの質を変える処理（今回はランダム）
     commentEl.textContent = randomComment;
     commentEl.className = 'comment';
     
@@ -87,6 +95,14 @@ function addRandomComment() {
     }
 }
 
+// --- コメントストリームを開始する関数（ファン1のストーリー完了後に一度だけ呼ばれる） ---
+function startCommentStream() {
+    if (!storyFlags.commentsStarted) {
+        // 5秒ごとにコメントを流す
+        setInterval(addRandomComment, 5000); 
+        storyFlags.commentsStarted = true;
+    }
+}
 
 // --- ストーリーの進行を開始する（モーダル開始） ---
 function startStory(storyKey) {
@@ -106,6 +122,11 @@ function startStory(storyKey) {
         fans = 1; 
         updateStats();
     }
+    
+    // ファン1のストーリーが終わった後にコメントを開始するためのフラグを設定
+    if (storyKey === 'fan1') {
+        storyFlags.startCommentsAfterEnd = true;
+    }
 }
 
 // --- 画面タップでセリフを一行進める（タップイベントハンドラー） ---
@@ -122,6 +143,12 @@ function advanceDialog() {
         isStoryActive = false;
         document.getElementById('produce-music-button').disabled = false; // ボタン有効化
         document.getElementById('dialog-text').textContent = "タップしてセリフを表示"; 
+        
+        // --- コメントストリームの開始チェック（ファン1のストーリーが完了したか） ---
+        if (storyFlags.startCommentsAfterEnd) {
+            startCommentStream(); // コメントの流れをスタート
+            storyFlags.startCommentsAfterEnd = false; // フラグをリセット
+        }
     }
 }
 
@@ -201,10 +228,12 @@ function reincarnate() {
     fans = 0;
     money = 0;
     productionCount = 0;
-
+    
+    // コメントは引き継がれるが、リセットの必要はないため commentsStarted はそのまま
+    
     // ストーリーフラグをリセット（最終イベント以外）
     for (let key in storyFlags) {
-        if (key !== 'fan50000_pre' && key !== 'initial') { 
+        if (key !== 'fan50000_pre' && key !== 'initial' && key !== 'commentsStarted') { 
              storyFlags[key] = false;
         }
     }
@@ -241,8 +270,7 @@ function initGame() {
     // 転生ボタンにreincarnate関数を割り当てる
     document.getElementById('reincarnate-button').onclick = reincarnate;
     
-    // 5秒ごとにコメントを流す
-    setInterval(addRandomComment, 5000); 
+    // コメントストリームはファン1のストーリー後に開始されるため、ここでは呼ばない。
 
     updateStats(); 
     startStory('initial'); // 最初のセリフを表示
