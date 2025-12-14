@@ -14,7 +14,6 @@
       align-items: center;
       justify-content: flex-start;
       height: 100vh;
-      overflow: hidden;
       padding: 20px;
     }
     .story {
@@ -23,6 +22,7 @@
       line-height: 1.5em;
       max-width: 600px;
       text-align: left;
+      cursor: pointer;
     }
     .button {
       margin-top: 20px;
@@ -55,16 +55,24 @@
   </div>
   <button class="button" id="createSong">楽曲制作</button>
   <div class="comments" id="comments"></div>
+
   <script>
     let fanCount = 0;
     let songCount = 0;
+    let storyIndex = 0;
+    let currentLines = [];
 
     const storyData = [
-      { fans: 0, text: `最近、DTMというものに興味がある。
-とりあえず小さなノートパソコンとヘッドホンを買った。
-今日から私もクリエイター.....？
-浮かれる前に一曲作ってみよう。`},
-      { fans: 1, text: `....。
+      // 楽曲制作系
+      { type: "song", text: `意外とパソコンの操作が難しかった。
+某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。
+とりあえず今日は寝よう。`},
+      { type: "song", text: `曲作りにも慣れて来たな。
+ファン数も順調に増えている。
+ご褒美に旅行でもするか。`},
+
+      // ファン数系
+      { type: "fan", fans: 1, text: `....。
 よく寝たな。
 あ、
 パソコン、閉じていなかったのか。
@@ -75,29 +83,29 @@
 ああ、私の曲を聴いてくれる人は、いたんだ。
 やる気が湧いてくる。
 私にとって一番最初のこのファンを、絶対大事にしよう。`},
-      { fans: 10, text: `ふと、DTMを始める前の事を考える。
+      { type: "fan", fans: 10, text: `ふと、DTMを始める前の事を考える。
 これまで見てきた配信者は皆ファンが数十万人いた。
 でも、ファン数10人に喜んでいる自分がいる。
 自然に笑みが溢れる。
 これが、古参ってやつか。`},
-      { fans: 100, text: `いつのまにかファンの数が増えていた。
+      { type: "fan", fans: 100, text: `いつのまにかファンの数が増えていた。
 これだけの人が私の音楽を愛してくれている...。
 とても感慨深い。
 ここまで来たらもう止まれない。
 折角だから目標を決めてみよう。
 次の目標は...`},
-      { fans: 1000, text: `1000という数字は大きくもあり小さくもある。
+      { type: "fan", fans: 1000, text: `1000という数字は大きくもあり小さくもある。
 全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。
 1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。
 大丈夫。
 これは趣味なのだから。
 次の目標は...`},
-      { fans: 10000, text: `最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。
+      { type: "fan", fans: 10000, text: `最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。
 あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。
 楽しい。ワクワクする。
 ここからどうなるか楽しみだ。
 次の目標は...`},
-      { fans: 50000, text: `最近ファンが増えない。
+      { type: "fan", fans: 50000, text: `最近ファンが増えない。
 ある配信者の言葉を思い出す。
 どんな活動者も勢いがあるのは最初だけ。
 あとは廃れていくのみなのだ。
@@ -128,22 +136,40 @@
     const commentsDiv = document.getElementById('comments');
     const songBtn = document.getElementById('createSong');
 
+    function updateCurrentLines(text){
+      currentLines = text.split("\n");
+      storyIndex = 0;
+      storyDiv.textContent = currentLines[storyIndex];
+    }
+
+    function nextLine(){
+      if(storyIndex < currentLines.length - 1){
+        storyIndex++;
+        storyDiv.textContent = currentLines[storyIndex];
+      } else {
+        // セリフ終わったら何もしない
+      }
+    }
+
     songBtn.addEventListener('click', () => {
       songCount++;
-      fanCount += Math.floor(Math.random() * 10) + 1; // 1〜10人増える
-      updateStory();
+      if(songCount === 1){
+        fanCount = 1; // 初回は必ず1
+      } else {
+        fanCount += Math.floor(Math.random() * 10) + 1;
+      }
+      fansDiv.textContent = fanCount;
+
+      // 楽曲制作系ストーリー優先
+      if(songCount === 1){
+        updateCurrentLines(storyData[0].text);
+      } else {
+        updateCurrentLines(storyData[1].text);
+      }
     });
 
-    function updateStory() {
-      fansDiv.textContent = fanCount;
-      let currentStory = storyData[0].text;
-      for(let i=0; i<storyData.length; i++){
-        if(fanCount >= storyData[i].fans){
-          currentStory = storyData[i].text;
-        }
-      }
-      storyDiv.textContent = currentStory;
-    }
+    // 画面タップで次のセリフ
+    storyDiv.addEventListener('click', nextLine);
 
     function showComments() {
       const comment = commentList[Math.floor(Math.random() * commentList.length)];
