@@ -7,7 +7,7 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    transition: background-color 1s ease; /* 色の変化を滑らかにする */
+    transition: background-color 1s ease;
 }
 
 #game-container {
@@ -34,69 +34,235 @@ header {
 #room-view {
     position: relative;
     height: 250px;
-    background-color: #222; /* 初期は暗い部屋 */
+    background-color: #1a1a1a; /* 初期は暗い部屋の壁 */
     border: 1px solid #444;
     border-radius: 5px;
     margin-bottom: 20px;
+    overflow: hidden; /* 要素がはみ出さないように */
     transition: background-color 1.5s ease;
 }
 
-/* 初期（ステージ0）：ノートPCとヘッドホン */
-#pc {
+/* 全ての要素の初期設定（見えないようにしておく） */
+#room-view > div {
     position: absolute;
-    bottom: 20px;
+    transition: all 0.8s ease;
+    box-shadow: none; /* ドット絵感を出すため影は使わない */
+}
+
+/* ------------------- */
+/* デスク (全ステージ共通の土台) */
+/* ------------------- */
+#desk {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: #4a3c3c; /* 木目調のドット絵風 */
+    z-index: 10;
+}
+
+/* ------------------- */
+/* Stage 0: 初期衝動 (0〜9999人) */
+/* ------------------- */
+.stage-0 #room-view {
+    background-color: #1a1a1a; /* 暗い壁 */
+}
+.stage-0 #pc {
+    bottom: 40px; /* デスクの上 */
     left: 50%;
     transform: translateX(-50%);
     width: 80px;
     height: 50px;
-    background-color: #666; /* 仮の表現 */
-    border-radius: 5px;
+    background-color: #666; /* ノートPC本体 */
+    border-radius: 2px 2px 0 0;
+    z-index: 15;
 }
 
-/* ステージ1（ファン100）：明るくなる、モニター追加 */
+
+/* ------------------- */
+/* Stage 1: 初期の成功 (1万〜99999人) */
+/* ------------------- */
 .stage-1 #room-view {
-    background-color: #40404a; /* 少し明るくなる */
+    background-color: #2a2a2a; /* 少し明るくなる */
 }
-.stage-1 #monitor {
-    position: absolute;
-    bottom: 70px;
+
+/* 外付けモニター追加 */
+.stage-1 #monitor-main {
+    bottom: 55px;
     left: 50%;
     transform: translateX(-50%);
     width: 120px;
     height: 80px;
-    background-color: #2a2a2a;
-    border: 3px solid #0f0; /* 付箋の表現 */
+    background-color: #111; /* モニター画面 */
+    border: 2px solid #555;
+    z-index: 12;
 }
-
-/* ステージ2（ファン1,000）：MIDIキーボード、オーディオIF */
-.stage-2 #room-view {
-    background-color: #505060;
+/* 付箋が画面端に1枚 */
+.stage-1 #post-it {
+    bottom: 105px;
+    left: calc(50% + 50px);
+    width: 15px;
+    height: 15px;
+    background-color: #ffeb3b; /* 黄色 */
+    z-index: 13;
 }
-.stage-2 #keyboard {
-    position: absolute;
-    bottom: 10px;
-    left: 65%;
+/* ノートPCはサブとして残るが小さくなる */
+.stage-1 #pc {
+    bottom: 40px;
+    left: 35%; 
+    transform: none;
     width: 60px;
-    height: 20px;
-    background-color: #777; /* MIDIキーボード */
+    height: 35px;
+    background-color: #444;
+    z-index: 15;
 }
 
-/* ステージ3（ファン10,000）：デュアルモニター、観葉植物 */
+
+/* ------------------- */
+/* Stage 2: 本格的な活動 (10万〜999999人) */
+/* ------------------- */
+.stage-2 #room-view {
+    background-color: #3a3a3a;
+}
+/* MIDIキーボード追加 */
+.stage-2 #keyboard {
+    bottom: 40px;
+    left: 65%;
+    width: 80px;
+    height: 25px;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff 10%, #111 10%, #111 20%); /* 白鍵と黒鍵のドット絵風表現 */
+    z-index: 15;
+}
+/* オーディオIF追加 */
+.stage-2 #audio-if {
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 25px;
+    background-color: #222;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    z-index: 16;
+}
+/* モニターはメインとして残る */
+.stage-2 #monitor-main {
+    /* 位置変更なし */
+}
+
+
+/* ------------------- */
+/* Stage 3: トップ層への挑戦 (100万〜199.9万人) */
+/* ------------------- */
 .stage-3 #room-view {
-    background-color: #506070; /* 夜景の色味 */
-    box-shadow: 0 0 50px rgba(0, 200, 255, 0.1); /* 窓の光の表現 */
+    background-color: #404050;
 }
-.stage-3 #monitor {
-    /* デュアルモニターの表現 */
-    left: 40%;
+/* デュアルモニター化 (モニターサブ追加) */
+.stage-3 #monitor-main {
+    left: 40%; /* 左にずらす */
 }
-.stage-3 #plant {
-    position: absolute;
-    bottom: 20px;
-    left: 10%;
-    width: 30px;
+.stage-3 #monitor-sub {
+    bottom: 55px;
+    left: 60%; /* 右側に追加 */
+    width: 120px;
+    height: 80px;
+    background-color: #111;
+    border: 2px solid #555;
+    z-index: 12;
+}
+/* マイクアームとマイク */
+.stage-3 #mic-arm {
+    bottom: 150px;
+    left: 75%;
+    width: 3px;
     height: 50px;
-    background-color: #0c0; /* 観葉植物 */
+    background-color: #777; /* アーム */
+    transform: rotate(20deg);
+    transform-origin: bottom center;
+    z-index: 14;
+}
+.stage-3 #mic-arm::before { /* マイク本体 */
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -5px;
+    width: 15px;
+    height: 15px;
+    background-color: #555;
+    border-radius: 3px;
+}
+/* 観葉植物（チル要素） */
+.stage-3 #plant {
+    bottom: 40px;
+    left: 10%;
+    width: 20px;
+    height: 40px;
+    background-color: #0c0; /* 葉 */
+    border-bottom: 5px solid #630; /* 植木鉢 */
+    z-index: 15;
+}
+
+
+/* ------------------- */
+/* Stage 4: プロフェッショナル (200万人〜) */
+/* ------------------- */
+.stage-4 #room-view {
+    background-color: #222530; /* 夜景が映える深い色 */
+}
+/* 夜景が見える窓 (壁の背景として) */
+.stage-4 #window {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #111;
+    /* 夜景の光の表現（ドット絵風のシンプルな表現） */
+    box-shadow: inset 0 0 50px rgba(0, 200, 255, 0.2);
+    /* 遠くのビルの灯り */
+    background-image: linear-gradient(to right, 
+        #ff0 1px, transparent 1px, transparent 5px, 
+        #f00 6px, transparent 6px, transparent 10px),
+    repeating-linear-gradient(to bottom, #333 0, #333 10px, #222 10px, #222 20px);
+    background-size: 100% 100%, 10px 10px; 
+    opacity: 0.3;
+}
+
+/* スピーカー増設 (左右に追加) */
+.stage-4 #speaker-left {
+    bottom: 40px;
+    left: 20%;
+    width: 25px;
+    height: 50px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    z-index: 12;
+}
+.stage-4 #speaker-right {
+    bottom: 40px;
+    left: 80%;
+    width: 25px;
+    height: 50px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    z-index: 12;
+}
+
+/* 椅子グレードアップ */
+.stage-4 #chair {
+    bottom: 0px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 120px;
+    background-color: #444; /* シート */
+    border-radius: 5px 5px 0 0;
+    z-index: 5; /* デスクより奥に */
+    /* ゲーミングチェア風の模様 */
+    background-image: linear-gradient(135deg, #f00 25%, transparent 25%),
+                      linear-gradient(-135deg, #f00 25%, transparent 25%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px;
+    opacity: 0.8;
 }
 
 /* ------------------- */
@@ -125,7 +291,7 @@ header {
     min-height: 50px;
     margin-bottom: 20px;
     border-radius: 5px;
-    position: relative; /* STORYマーカーを絶対配置するために必要 */
+    position: relative;
 }
 
 #dialog-text {
@@ -133,10 +299,9 @@ header {
     line-height: 1.6;
 }
 
-/* ★追加：STORYマーカーのスタイル設定★ */
 #story-marker {
     position: absolute;
-    top: -15px; /* 吹き出しの上に出す */
+    top: -15px;
     left: 10px;
     background-color: #007bff;
     color: white;
@@ -144,7 +309,7 @@ header {
     font-weight: bold;
     padding: 2px 8px;
     border-radius: 3px;
-    display: none; /* 初期は非表示 */
+    display: none;
 }
 
 /* ------------------- */
