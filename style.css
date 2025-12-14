@@ -38,7 +38,7 @@ header {
     border: 1px solid #444;
     border-radius: 5px;
     margin-bottom: 20px;
-    overflow: hidden; /* 要素がはみ出さないように */
+    overflow: hidden;
     transition: background-color 1.5s ease;
 }
 
@@ -46,13 +46,15 @@ header {
 #room-view > div {
     position: absolute;
     transition: all 0.8s ease;
-    box-shadow: none; /* ドット絵感を出すため影は使わない */
+    box-shadow: none;
+    display: none; /* デフォルトでは非表示 */
 }
 
 /* ------------------- */
 /* デスク (全ステージ共通の土台) */
 /* ------------------- */
 #desk {
+    display: block; /* デスクは常に表示 */
     bottom: 0;
     left: 0;
     width: 100%;
@@ -62,12 +64,77 @@ header {
 }
 
 /* ------------------- */
+/* プレイヤーのドット絵表現 (影絵) */
+/* ------------------- */
+#player {
+    display: block; /* プレイヤーは常に表示 */
+    bottom: 35px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 100px;
+    background-color: transparent;
+    z-index: 17; /* デスクや椅子より手前に表示 */
+}
+
+/* 頭部 */
+#player::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25px;
+    width: 30px;
+    height: 30px;
+    background-color: #333; /* 影 */
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #222;
+}
+
+/* 体（フードや服の表現） */
+#player::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    width: 60px;
+    height: 75px;
+    background-color: #333;
+    border-radius: 5px 5px 0 0;
+}
+
+/* 🤚 キーボードを叩く手の表現 (デスクの上の作業感) - #room-viewの擬似要素で表現 */
+/* 文字列バグ修正済み、サイズ調整済み */
+#room-view::before {
+    content: ''; /* ← 必ず空の文字列 '' にする！ */
+    position: absolute;
+    bottom: 45px; 
+    left: 40%;
+    width: 15px;
+    height: 5px;
+    background-color: #333; /* 左手 */
+    z-index: 20;
+    border: 1px solid #222;
+}
+#room-view::after {
+    content: ''; /* ← 必ず空の文字列 '' にする！ */
+    position: absolute;
+    bottom: 45px; 
+    left: 50%;
+    width: 15px;
+    height: 5px;
+    background-color: #333; /* 右手 */
+    z-index: 20;
+    border: 1px solid #222;
+}
+
+/* ------------------- */
 /* Stage 0: 初期衝動 (0〜9999人) */
 /* ------------------- */
 .stage-0 #room-view {
     background-color: #1a1a1a; /* 暗い壁 */
 }
 .stage-0 #pc {
+    display: block;
     bottom: 40px; /* デスクの上 */
     left: 50%;
     transform: translateX(-50%);
@@ -85,9 +152,9 @@ header {
 .stage-1 #room-view {
     background-color: #2a2a2a; /* 少し明るくなる */
 }
-
 /* 外付けモニター追加 */
 .stage-1 #monitor-main {
+    display: block;
     bottom: 55px;
     left: 50%;
     transform: translateX(-50%);
@@ -99,6 +166,7 @@ header {
 }
 /* 付箋が画面端に1枚 */
 .stage-1 #post-it {
+    display: block;
     bottom: 105px;
     left: calc(50% + 50px);
     width: 15px;
@@ -126,6 +194,7 @@ header {
 }
 /* MIDIキーボード追加 */
 .stage-2 #keyboard {
+    display: block;
     bottom: 40px;
     left: 65%;
     width: 80px;
@@ -135,6 +204,7 @@ header {
 }
 /* オーディオIF追加 */
 .stage-2 #audio-if {
+    display: block;
     bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
@@ -147,6 +217,7 @@ header {
 }
 /* モニターはメインとして残る */
 .stage-2 #monitor-main {
+    display: block;
     /* 位置変更なし */
 }
 
@@ -162,6 +233,7 @@ header {
     left: 40%; /* 左にずらす */
 }
 .stage-3 #monitor-sub {
+    display: block;
     bottom: 55px;
     left: 60%; /* 右側に追加 */
     width: 120px;
@@ -172,6 +244,7 @@ header {
 }
 /* マイクアームとマイク */
 .stage-3 #mic-arm {
+    display: block;
     bottom: 150px;
     left: 75%;
     width: 3px;
@@ -193,6 +266,7 @@ header {
 }
 /* 観葉植物（チル要素） */
 .stage-3 #plant {
+    display: block;
     bottom: 40px;
     left: 10%;
     width: 20px;
@@ -211,6 +285,7 @@ header {
 }
 /* 夜景が見える窓 (壁の背景として) */
 .stage-4 #window {
+    display: block;
     top: 0;
     left: 0;
     width: 100%;
@@ -225,10 +300,12 @@ header {
     repeating-linear-gradient(to bottom, #333 0, #333 10px, #222 10px, #222 20px);
     background-size: 100% 100%, 10px 10px; 
     opacity: 0.3;
+    z-index: 1; /* 背景なので一番奥 */
 }
 
 /* スピーカー増設 (左右に追加) */
 .stage-4 #speaker-left {
+    display: block;
     bottom: 40px;
     left: 20%;
     width: 25px;
@@ -238,6 +315,7 @@ header {
     z-index: 12;
 }
 .stage-4 #speaker-right {
+    display: block;
     bottom: 40px;
     left: 80%;
     width: 25px;
@@ -249,6 +327,7 @@ header {
 
 /* 椅子グレードアップ */
 .stage-4 #chair {
+    display: block;
     bottom: 0px; 
     left: 50%;
     transform: translateX(-50%);
