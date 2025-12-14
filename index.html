@@ -1,55 +1,80 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORLD1 - Re:Start Game</title>
-    <link rel="stylesheet" href="style.css"> 
-</head>
-<body class="stage-0">
-    <div id="game-container">
-        <header>
-            <h1 id="world-title">WORLD1</h1>
-            <div id="stats">
-                ファン数: <span id="fan-count">0</span>　|　お金: $<span id="money-count">0</span>
-            </div>
-        </header>
+body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif;
+    background-color: #333;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    transition: background-color 1s ease;
+}
 
-        <div id="room-view">
-            <div id="room-view">
-            <div id="player"></div> 
-            
-            <div id="window"></div>
-            <div id="desk"></div>
-            ```
+#game-container {
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+}
 
----
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-### 2. 🎨 `style.css` の修正（プレイヤーの見た目定義）
+#stats {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
 
-`style.css` は、**見た目（色や形）**を定義するファイルだ。
+/* ------------------- */
+/* 部屋の進化のベース */
+/* ------------------- */
+#room-view {
+    position: relative;
+    height: 250px;
+    background-color: #1a1a1a; /* 初期は暗い部屋の壁 */
+    border: 1px solid #444;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: background-color 1.5s ease;
+}
 
-#### 変更内容
+/* 全ての要素の初期設定（見えないようにしておく） */
+#room-view > div {
+    position: absolute;
+    transition: all 0.8s ease;
+    box-shadow: none;
+    display: none; /* デフォルトでは非表示 */
+}
 
-新しく追加した `#player` の形や色、位置をドット絵風に指定するCSSコードを追加する。
+/* ------------------- */
+/* デスク (全ステージ共通の土台) */
+/* ------------------- */
+#desk {
+    display: block; /* デスクは常に表示 */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: #4a3c3c; /* 木目調のドット絵風 */
+    z-index: 10;
+}
 
-#### 貼り付け場所
-
-**`style.css`** を開き、一番下（最終行）に、以下のコードブロックを**追記**してね。
-
-```css
 /* ------------------- */
 /* プレイヤーのドット絵表現 (影絵) */
 /* ------------------- */
 #player {
-    position: absolute;
-    bottom: 30px; /* 椅子の上、デスクの奥 */
+    display: block; /* プレイヤーは常に表示 */
+    bottom: 35px; 
     left: 50%;
     transform: translateX(-50%);
     width: 80px;
     height: 100px;
-    background-color: transparent; /* ベースは透明 */
-    z-index: 6; /* 椅子とデスクの間 */
+    background-color: transparent;
+    z-index: 17; /* デスクや椅子より手前に表示 */
 }
 
 /* 頭部 */
@@ -61,8 +86,8 @@
     width: 30px;
     height: 30px;
     background-color: #333; /* 影 */
-    border-radius: 50%; /* 丸い頭 */
-    box-shadow: 0 0 0 1px #222; /* ドット絵風の境界線 */
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #222;
 }
 
 /* 体（フードや服の表現） */
@@ -77,35 +102,319 @@
     border-radius: 5px 5px 0 0;
 }
 
-/* Stage 4 の椅子（#chair）より手前に表示されるように調整が必要 */
-.stage-4 #player {
-    z-index: 10;
+/* 🤚 キーボードを叩く手の表現 (デスクの上の作業感) - #room-viewの擬似要素で表現 */
+/* Stage 0から表示 */
+#room-view::before {
+    content: ''; 
+    position: absolute;
+    bottom: 40px; 
+    left: 40%;
+    width: 5px;
+    height: 5px;
+    background-color: #333; /* 左手 */
+    z-index: 20;
+    border: 1px solid #222;
 }
-            <div id="window"></div>
-            <div id="desk"></div>
-            <div id="chair"></div>
-            <div id="pc"></div>
-            <div id="monitor-main"></div>
-            <div id="monitor-sub"></div>
-            <div id="post-it"></div> <div id="keyboard"></div> <div id="audio-if"></div> <div id="mic-arm"></div> <div id="speaker-left"></div>
-            <div id="speaker-right"></div>
-            <div id="plant"></div>
-            </div>
+#room-view::after {
+    content: ''; 
+    position: absolute;
+    bottom: 40px; 
+    left: 55%;
+    width: 5px;
+    height: 5px;
+    background-color: #333; /* 右手 */
+    z-index: 20;
+    border: 1px solid #222;
+}
 
-        <div id="comment-stream">
-            </div>
+/* ------------------- */
+/* Stage 0: 初期衝動 (0〜9999人) */
+/* ------------------- */
+.stage-0 #room-view {
+    background-color: #1a1a1a; /* 暗い壁 */
+}
+.stage-0 #pc {
+    display: block;
+    bottom: 40px; /* デスクの上 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 50px;
+    background-color: #666; /* ノートPC本体 */
+    border-radius: 2px 2px 0 0;
+    z-index: 15;
+}
 
-        <div id="dialog-box">
-            <div id="story-marker" style="display: none;">STORY</div>
-            <p id="dialog-text">(タップしてセリフを表示)</p>
-        </div>
 
-        <div id="actions">
-            <button id="produce-music-button">楽曲制作</button>
-            <button id="reincarnate-button" style="display: none;">[新しく始める]</button>
-        </div>
-    </div>
+/* ------------------- */
+/* Stage 1: 初期の成功 (1万〜99999人) */
+/* ------------------- */
+.stage-1 #room-view {
+    background-color: #2a2a2a; /* 少し明るくなる */
+}
+/* 外付けモニター追加 */
+.stage-1 #monitor-main {
+    display: block;
+    bottom: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 80px;
+    background-color: #111; /* モニター画面 */
+    border: 2px solid #555;
+    z-index: 12;
+}
+/* 付箋が画面端に1枚 */
+.stage-1 #post-it {
+    display: block;
+    bottom: 105px;
+    left: calc(50% + 50px);
+    width: 15px;
+    height: 15px;
+    background-color: #ffeb3b; /* 黄色 */
+    z-index: 13;
+}
+/* ノートPCはサブとして残るが小さくなる */
+.stage-1 #pc {
+    bottom: 40px;
+    left: 35%; 
+    transform: none;
+    width: 60px;
+    height: 35px;
+    background-color: #444;
+    z-index: 15;
+}
 
-    <script src="script.js"></script>
-</body>
-</html>
+
+/* ------------------- */
+/* Stage 2: 本格的な活動 (10万〜999999人) */
+/* ------------------- */
+.stage-2 #room-view {
+    background-color: #3a3a3a;
+}
+/* MIDIキーボード追加 */
+.stage-2 #keyboard {
+    display: block;
+    bottom: 40px;
+    left: 65%;
+    width: 80px;
+    height: 25px;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff 10%, #111 10%, #111 20%); /* 白鍵と黒鍵のドット絵風表現 */
+    z-index: 15;
+}
+/* オーディオIF追加 */
+.stage-2 #audio-if {
+    display: block;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 25px;
+    background-color: #222;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    z-index: 16;
+}
+/* モニターはメインとして残る */
+.stage-2 #monitor-main {
+    display: block;
+    /* 位置変更なし */
+}
+
+
+/* ------------------- */
+/* Stage 3: トップ層への挑戦 (100万〜199.9万人) */
+/* ------------------- */
+.stage-3 #room-view {
+    background-color: #404050;
+}
+/* デュアルモニター化 (モニターサブ追加) */
+.stage-3 #monitor-main {
+    left: 40%; /* 左にずらす */
+}
+.stage-3 #monitor-sub {
+    display: block;
+    bottom: 55px;
+    left: 60%; /* 右側に追加 */
+    width: 120px;
+    height: 80px;
+    background-color: #111;
+    border: 2px solid #555;
+    z-index: 12;
+}
+/* マイクアームとマイク */
+.stage-3 #mic-arm {
+    display: block;
+    bottom: 150px;
+    left: 75%;
+    width: 3px;
+    height: 50px;
+    background-color: #777; /* アーム */
+    transform: rotate(20deg);
+    transform-origin: bottom center;
+    z-index: 14;
+}
+.stage-3 #mic-arm::before { /* マイク本体 */
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -5px;
+    width: 15px;
+    height: 15px;
+    background-color: #555;
+    border-radius: 3px;
+}
+/* 観葉植物（チル要素） */
+.stage-3 #plant {
+    display: block;
+    bottom: 40px;
+    left: 10%;
+    width: 20px;
+    height: 40px;
+    background-color: #0c0; /* 葉 */
+    border-bottom: 5px solid #630; /* 植木鉢 */
+    z-index: 15;
+}
+
+
+/* ------------------- */
+/* Stage 4: プロフェッショナル (200万人〜) */
+/* ------------------- */
+.stage-4 #room-view {
+    background-color: #222530; /* 夜景が映える深い色 */
+}
+/* 夜景が見える窓 (壁の背景として) */
+.stage-4 #window {
+    display: block;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #111;
+    /* 夜景の光の表現（ドット絵風のシンプルな表現） */
+    box-shadow: inset 0 0 50px rgba(0, 200, 255, 0.2);
+    /* 遠くのビルの灯り */
+    background-image: linear-gradient(to right, 
+        #ff0 1px, transparent 1px, transparent 5px, 
+        #f00 6px, transparent 6px, transparent 10px),
+    repeating-linear-gradient(to bottom, #333 0, #333 10px, #222 10px, #222 20px);
+    background-size: 100% 100%, 10px 10px; 
+    opacity: 0.3;
+    z-index: 1; /* 背景なので一番奥 */
+}
+
+/* スピーカー増設 (左右に追加) */
+.stage-4 #speaker-left {
+    display: block;
+    bottom: 40px;
+    left: 20%;
+    width: 25px;
+    height: 50px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    z-index: 12;
+}
+.stage-4 #speaker-right {
+    display: block;
+    bottom: 40px;
+    left: 80%;
+    width: 25px;
+    height: 50px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    z-index: 12;
+}
+
+/* 椅子グレードアップ */
+.stage-4 #chair {
+    display: block;
+    bottom: 0px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 120px;
+    background-color: #444; /* シート */
+    border-radius: 5px 5px 0 0;
+    z-index: 5; /* デスクより奥に */
+    /* ゲーミングチェア風の模様 */
+    background-image: linear-gradient(135deg, #f00 25%, transparent 25%),
+                      linear-gradient(-135deg, #f00 25%, transparent 25%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px;
+    opacity: 0.8;
+}
+
+/* ------------------- */
+/* コメントストリーム */
+/* ------------------- */
+#comment-stream {
+    height: 30px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.comment {
+    margin: 2px 0;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+/* ------------------- */
+/* ダイアログボックス */
+/* ------------------- */
+#dialog-box {
+    cursor: pointer;
+    background: #111;
+    border: 2px solid #555;
+    padding: 15px;
+    min-height: 50px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    position: relative;
+}
+
+#dialog-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+#story-marker {
+    position: absolute;
+    top: -15px;
+    left: 10px;
+    background-color: #007bff;
+    color: white;
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 3px;
+    display: none;
+}
+
+/* ------------------- */
+/* アクション */
+/* ------------------- */
+#actions {
+    display: flex;
+    justify-content: space-around;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
