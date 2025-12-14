@@ -62,21 +62,23 @@ header {
     height: 40px;
     background-color: #4a3c3c;
     z-index: 10;
+    /* 斜め上から見下ろす傾き */
     transform: perspective(400px) rotateX(20deg) skewX(-10deg); 
     transform-origin: bottom;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 /* ------------------- */
-/* プレイヤーのドット絵表現 (影絵) - 位置と傾きを調整 */
+/* プレイヤーのドット絵表現 (影絵) - 位置と傾きを微調整 */
 /* ------------------- */
 #player {
     display: block; /* ★表示を強制★ */
-    bottom: 70px;
+    bottom: 60px; /* デスクの奥、少し手前に移動 */
     left: 50%;
-    transform: translateX(-50%) perspective(400px) rotateX(10deg);
-    width: 80px;
-    height: 100px;
+    /* 傾きを少し強めて、座っている立体感を出す */
+    transform: translateX(-50%) perspective(400px) rotateX(15deg); 
+    width: 60px; /* プレイヤーの幅を少し小さく */
+    height: 80px; /* 高さも少し小さく */
     background-color: transparent;
     z-index: 17;
 }
@@ -85,7 +87,7 @@ header {
     content: '';
     position: absolute;
     top: 0;
-    left: 25px;
+    left: 15px; /* 中央に寄せる */
     width: 30px;
     height: 30px;
     background-color: #333; 
@@ -97,19 +99,19 @@ header {
     content: '';
     position: absolute;
     top: 25px;
-    left: 10px;
-    width: 60px;
-    height: 75px;
+    left: 5px; 
+    width: 50px; /* 幅を狭く */
+    height: 55px; /* 高さを低く */
     background-color: #333;
     border-radius: 5px 5px 0 0;
 }
 
-/* 🤚 キーボードを叩く手の表現 (デスクの上) */
+/* 🤚 キーボードを叩く手の表現 (デスクの上) - 位置をPCより手前に移動 */
 #room-view::before {
-    content: ''; 
+    content: ''; /* 文字列バグ修正済み */
     position: absolute;
-    bottom: 55px;
-    left: 42%;
+    bottom: 52px; /* デスクのギリギリ上 */
+    left: 40%;
     width: 15px;
     height: 3px; 
     background-color: #333; 
@@ -118,9 +120,9 @@ header {
     transform: perspective(400px) rotateX(20deg) skewX(-10deg);
 }
 #room-view::after {
-    content: ''; 
+    content: ''; /* 文字列バグ修正済み */
     position: absolute;
-    bottom: 55px;
+    bottom: 52px; /* デスクのギリギリ上 */
     left: 55%;
     width: 15px; 
     height: 3px; 
@@ -144,9 +146,12 @@ header {
     transform-origin: center bottom;
     width: 80px;
     height: 50px;
-    background-color: #666; 
+    background-color: #333; /* 本体色を少し暗く */
     border-radius: 2px 2px 0 0;
     z-index: 15;
+    /* 縁を明るくして目立たせる */
+    border: 2px solid #fff; 
+    box-sizing: border-box;
 }
 
 
@@ -191,6 +196,8 @@ header {
     height: 35px;
     background-color: #444;
     z-index: 15;
+    border: 1px solid #fff; 
+    box-sizing: border-box;
 }
 
 
