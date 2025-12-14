@@ -1,0 +1,161 @@
+body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif;
+    background-color: #333;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    transition: background-color 1s ease; /* 色の変化を滑らかにする */
+}
+
+#game-container {
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#stats {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+/* ------------------- */
+/* 部屋の進化のベース */
+/* ------------------- */
+#room-view {
+    position: relative;
+    height: 250px;
+    background-color: #222; /* 初期は暗い部屋 */
+    border: 1px solid #444;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    transition: background-color 1.5s ease;
+}
+
+/* 初期（ステージ0）：ノートPCとヘッドホン */
+#pc {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 50px;
+    background-color: #666; /* 仮の表現 */
+    border-radius: 5px;
+}
+
+/* ステージ1（ファン100）：明るくなる、モニター追加 */
+.stage-1 #room-view {
+    background-color: #40404a; /* 少し明るくなる */
+}
+.stage-1 #monitor {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 80px;
+    background-color: #2a2a2a;
+    border: 3px solid #0f0; /* 付箋の表現 */
+}
+
+/* ステージ2（ファン1,000）：MIDIキーボード、オーディオIF */
+.stage-2 #room-view {
+    background-color: #505060;
+}
+.stage-2 #keyboard {
+    position: absolute;
+    bottom: 10px;
+    left: 65%;
+    width: 60px;
+    height: 20px;
+    background-color: #777; /* MIDIキーボード */
+}
+
+/* ステージ3（ファン10,000）：デュアルモニター、観葉植物 */
+.stage-3 #room-view {
+    background-color: #506070; /* 夜景の色味 */
+    box-shadow: 0 0 50px rgba(0, 200, 255, 0.1); /* 窓の光の表現 */
+}
+.stage-3 #monitor {
+    /* デュアルモニターの表現 */
+    left: 40%;
+}
+.stage-3 #plant {
+    position: absolute;
+    bottom: 20px;
+    left: 10%;
+    width: 30px;
+    height: 50px;
+    background-color: #0c0; /* 観葉植物 */
+}
+
+/* ------------------- */
+/* コメントストリーム */
+/* ------------------- */
+#comment-stream {
+    height: 30px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.comment {
+    margin: 2px 0;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+/* ------------------- */
+/* ダイアログボックス */
+/* ------------------- */
+#dialog-box {
+    cursor: pointer;
+    background: #111;
+    border: 2px solid #555;
+    padding: 15px;
+    min-height: 50px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+#dialog-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ------------------- */
+/* アクション */
+/* ------------------- */
+#actions {
+    display: flex;
+    justify-content: space-around;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
