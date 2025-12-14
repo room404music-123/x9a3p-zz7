@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>WORLD1</title>
+<style>
+  body {
+    margin: 0;
+    background: #0a1a2e; /* 暗めの青 */
+    color: #e0ffe9;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    cursor: pointer;
+  }
+  #dialog-box {
+    text-align: center;
+    max-width: 600px;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+  }
+  #stats {
+    margin-top: 20px;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="dialog-box">(タップしてセリフを表示)</div>
+
+<div id="stats">
+  ファン数: <span id="fan-count">0</span><br>
+  お金: <span id="money-count">0</span>
+</div>
+
+<button id="produce-music-button">楽曲制作</button>
+
+<script>
+let fans = 0;
+let money = 0;
+let productionCount = 0;
+let storyIndex = 0;
+
+// ストーリー配列（楽曲制作優先）
+const storyLines = [
+  "(タップしてセリフを表示) 最近、DTMというものに興味がある。",
+  "とりあえず小さなノートパソコンとヘッドホンを買った。",
+  "今日から私もクリエイター.....？",
+  "浮かれる前に一曲作ってみよう。",
+  // 初回楽曲制作後
+  "意外とパソコンの操作が難しかった。",
+  "某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。",
+  "とりあえず今日は寝よう。",
+  // ファン数1
+  "....。よく寝たな。あ、パソコン、閉じていなかったのか。",
+  "電気代が高くなりそうだな。とりあえず閉じておこう。",
+  "....一件のコメント？「めちゃくちゃ好きです！センスあると思います！」",
+  "ああ、私の曲を聴いてくれる人は、いたんだ。やる気が湧いてくる。",
+  "私にとって一番最初のこのファンを、絶対大事にしよう。"
+];
+
+let displayedStory = Array(storyLines.length).fill(false);
+
+function updateStats() {
+  document.getElementById('fan-count').textContent = fans;
+  document.getElementById('money-count').textContent = money;
+}
+
+// 楽曲制作ボタン
+document.getElementById('produce-music-button').onclick = () => {
+  productionCount++;
+  if (productionCount === 1) fans = 1; // 最初はファン1
+  else fans += Math.floor(Math.random() * 3) + 1; // 2人～4人くらい増える
+  money += 10;
+  updateStats();
+  tryDisplayStory(); // 楽曲制作後のストーリー確認
+};
+
+// セリフ表示（画面タップ）
+document.body.addEventListener('click', (e) => {
+  // ボタン自体は除外
+  if (e.target.id === 'produce-music-button') return;
+
+  // 次に表示するストーリーを探す
+  while(storyIndex < storyLines.length && displayedStory[storyIndex]) {
+    storyIndex++;
+  }
+
+  if(storyIndex < storyLines.length) {
+    document.getElementById('dialog-box').textContent = storyLines[storyIndex];
+    displayedStory[storyIndex] = true;
+  }
+});
+
+// 楽曲制作後のストーリーがまだ出ていない場合に表示
+function tryDisplayStory() {
+  for(let i =
