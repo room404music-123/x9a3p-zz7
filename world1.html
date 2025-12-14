@@ -1,0 +1,168 @@
+// --- ゲーム状態管理 ---
+let fans = 0;
+let money = 0;
+let productionCount = 0;
+
+// ストーリー既読フラグ
+const storyFlags = {
+    initial: false,
+    afterFirstProduction: false,
+    fan1: false,
+    production10: false,
+    fan10: false,
+    fan100: false,
+    fan1000: false,
+    fan10000: false,
+    fan50000: false
+};
+
+// --- セリフデータ ---
+const dialogData = {
+    initial: ["最近、DTMというものに興味がある。",
+              "とりあえず小さなノートパソコンとヘッドホンを買った。",
+              "今日から私もクリエイター.....？",
+              "浮かれる前に一曲作ってみよう。"],
+    afterFirstProduction: ["意外とパソコンの操作が難しかった。",
+                           "某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。",
+                           "とりあえず今日は寝よう。"],
+    fan1: ["....。よく寝たな。",
+           "あ、パソコン、閉じていなかったのか。電気代が高くなりそうだな。",
+           "とりあえず閉じておこう。",
+           "....一件のコメント？「めちゃくちゃ好きです！センスあると思います！」",
+           "ああ、私の曲を聴いてくれる人は、いたんだ。",
+           "やる気が湧いてくる。私にとって一番最初のこのファンを、絶対大事にしよう。"],
+    production10: ["曲作りにも慣れて来たな。",
+                   "ファン数も順調に増えている。",
+                   "ご褒美に旅行でもするか。"],
+    fan10: ["ふと、DTMを始める前の事を考える。",
+             "これまで見てきた配信者は皆ファンが数十万人いた。",
+             "でも、ファン数10人に喜んでいる自分がいる。",
+             "自然に笑みが溢れる。",
+             "これが、古参ってやつか。"],
+    fan100: ["いつのまにかファンの数が増えていた。",
+              "これだけの人が私の音楽を愛してくれている...",
+              "とても感慨深い。",
+              "ここまで来たらもう止まれない。",
+              "折角だから目標を決めてみよう。",
+              "次の目標は..."],
+    fan1000: ["1000という数字は大きくもあり小さくもある。",
+               "全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。",
+               "1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。",
+               "大丈夫。",
+               "これは趣味なのだから。",
+               "次の目標は..."],
+    fan10000: ["最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。",
+                "あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。",
+                "楽しい。ワクワクする。",
+                "ここからどうなるか楽しみだ。",
+                "次の目標は..."],
+    fan50000: ["最近ファンが増えない。",
+                "ある配信者の言葉を思い出す。",
+                "どんな活動者も勢いがあるのは最初だけ。",
+                "あとは廃れていくのみなのだ。",
+                "現実を突きつけられると少し悲しくなる。",
+                "あれ。私は何のためにこの活動を始めたのか。",
+                "趣味じゃなかったのか？趣味なら、何も心配することは無いはずなのに。",
+                "私は承認欲求の塊になってしまったようだ。",
+                "....転生。",
+                "一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。",
+                "これで新しい視聴者を得られるなら。",
+                "このアカウントを消して新しい音楽家になれば。",
+                "...。",
+                "目標を達成できるかもしれない。"]
+};
+
+// --- 現在表示中のセリフインデックス ---
+let currentDialogLines = [];
+let currentLineIndex = 0;
+let isStoryActive = false;
+
+// --- HTML更新関数 ---
+function updateStats() {
+    document.getElementById('fan-count').textContent = fans;
+    document.getElementById('money-count').textContent = money;
+}
+
+// --- ストーリー開始 ---
+function startStory(key) {
+    if (!storyFlags[key]) {
+        currentDialogLines = dialogData[key];
+        currentLineIndex = 0;
+        isStoryActive = true;
+        storyFlags[key] = true;
+        showNextLine();
+    }
+}
+
+// --- 次のセリフ表示 ---
+function showNextLine() {
+    if (!isStoryActive) return;
+    const dialogBox = document.getElementById('dialog-text');
+    dialogBox.textContent = currentDialogLines[currentLineIndex];
+    currentLineIndex++;
+    if (currentLineIndex >= currentDialogLines.length) {
+        isStoryActive = false;
+    }
+}
+
+// --- ストーリー条件チェック ---
+function checkStoryConditions() {
+    if (productionCount === 1 && !storyFlags.afterFirstProduction) {
+        startStory('afterFirstProduction');
+        storyFlags.afterFirstProduction = true;
+        return;
+    }
+    if (fans >= 1 && storyFlags.afterFirstProduction && !storyFlags.fan1) {
+        startStory('fan1');
+        return;
+    }
+    if (productionCount >= 10 && !storyFlags.production10) {
+        startStory('production10');
+        return;
+    }
+    if (fans >= 10 && !storyFlags.fan10) {
+        startStory('fan10');
+        return;
+    }
+    if (fans >= 100 && !storyFlags.fan100) {
+        startStory('fan100');
+        return;
+    }
+    if (fans >= 1000 && !storyFlags.fan1000) {
+        startStory('fan1000');
+        return;
+    }
+    if (fans >= 10000 && !storyFlags.fan10000) {
+        startStory('fan10000');
+        return;
+    }
+    if (fans >= 50000 && !storyFlags.fan50000) {
+        startStory('fan50000');
+        document.getElementById('produce-music-button').disabled = true;
+        return;
+    }
+}
+
+// --- 楽曲制作 ---
+function produceMusic() {
+    if (isStoryActive) return; // ストーリー中は制作できない
+    productionCount++;
+    fans += Math.floor(Math.random() * 5) + 1;
+    money += 100;
+    updateStats();
+    checkStoryConditions();
+}
+
+// --- 初期化 ---
+function initGame() {
+    document.getElementById('produce-music-button').onclick = produceMusic;
+    document.getElementById('dialog-box').onclick = () => {
+        if (isStoryActive) {
+            showNextLine();
+        }
+    };
+    document.getElementById('dialog-text').textContent = "(タップしてセリフを表示)";
+}
+
+// --- ページ読み込み時 ---
+document.addEventListener('DOMContentLoaded', initGame);
