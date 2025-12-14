@@ -17,6 +17,7 @@ body {
   padding: 20px;
   position: relative;
 }
+h1 { margin-top: 0; }
 .story {
   margin-top: 20px;
   font-size: 18px;
@@ -163,11 +164,11 @@ function nextLine(){
   }
 }
 
-// 画面タップで1行ずつ
 document.body.addEventListener('click', (e)=>{
   if(firstTap){
     firstTap = false;
-    storyDiv.textContent = "タップして楽曲制作ストーリーを始める";
+    storyDiv.textContent = "";
+    handleStory();
   } else if(e.target !== songBtn && e.target !== world2Container){
     nextLine();
   }
@@ -187,12 +188,12 @@ function handleStory() {
   // ファン数ストーリー
   for(let fs of fanStoryData){
     if(fanCount >= fs.fans && !fs.shown){
-      fanCount += 0; // ファン数はここで加算済み、重複しない
       money += fs.money;
       fansDiv.textContent = fanCount;
       moneyDiv.textContent = money;
       updateCurrentLines(fs.text);
-      fs.shown = true; // 一度表示したら流さない
+      fs.shown = true;
+      break; // 1回だけ表示
     }
   }
 
