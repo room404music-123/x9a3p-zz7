@@ -1,237 +1,493 @@
-// ===================================
-// GLOBAL VARIABLES (プレイヤーの状態)
-// ===================================
-let playerState = {
-    fans: 0,
-    money: 5000, // 初期マネーを増やしてガチャを回せるように
-    trend: 50,   // トレンド度の初期値 (0-100)
-    productionCount: 0,
-    reincarnationCount: 0,
-    // ★ここに追加した機材の情報が入る★
-    equipment: {}, 
-    // UIの状態管理 (FREE, STORY, GACHAなど)
-    uiState: "FREE" 
-};
-
-// ===================================
-// STORY & GACHA DATA (ガチャ排出率)
-// ===================================
-
-const GACHA_COST = 500;
-
-// ★シア提案の排出率を採用 (遊びやすさ重視)
-const GACHA_RATES = {
-    'N': 55,
-    'R': 30,
-    'SR': 10,
-    'SSR': 5
-};
-
-// 仮の機材アイテムリスト（今は機材ガチャのみ）
-const EQUIPMENT_LIST = [
-    // N (55%)
-    { name: "ノイズ低減イヤホン N", rank: "N", effect: { fanIncrease: 1, moneyIncrease: 1 }, flavor: "初期の必需品。音が漏れる。" },
-    { name: "中古のイス N", rank: "N", effect: { fanIncrease: 1, moneyIncrease: 1 }, flavor: "座り心地は最悪だが、まあ座れる。" },
-    // R (30%)
-    { name: "格安モニター R", rank: "R", effect: { fanIncrease: 3, moneyIncrease: 3 }, flavor: "画面が少し明るくなった。気分が良い。" },
-    { name: "普通のキーボード R", rank: "R", effect: { fanIncrease: 3, moneyIncrease: 3 }, flavor: "指に吸い付く感触が心地よい。" },
-    // SR (10%)
-    { name: "高性能PC SR", rank: "SR", effect: { fanIncrease: 10, moneyIncrease: 10 }, flavor: "レンダリング速度が大幅に向上した。時間短縮は正義。" },
-    { name: "マイクセット SR", rank: "SR", effect: { fanIncrease: 10, moneyIncrease: 10 }, flavor: "歌ってみたにも挑戦できる！" },
-    // SSR (5%)
-    { name: "ゲーミングチェア SSR", rank: "SSR", effect: { fanIncrease: 30, moneyIncrease: 30 }, flavor: "疲れを知らない身体を手に入れた。作業効率爆上がり！" },
-    { name: "防音室（簡易） SSR", rank: "SSR", effect: { fanIncrease: 50, moneyIncrease: 50 }, flavor: "夜中でも思いっきり音が出せる最高の環境。" }
-];
-
-
-// ===================================
-// DOM ELEMENTS & INITIAL SETUP
-// ===================================
-const fanCountElement = document.getElementById('fan-count');
-const moneyCountElement = document.getElementById('money-count');
-const produceButton = document.getElementById('produce-music-button');
-const dialogBox = document.getElementById('dialog-box');
-const dialogText = document.getElementById('dialog-text');
-const roomView = document.getElementById('room-view');
-const actionsContainer = document.getElementById('actions');
-
-// 初期表示を更新
-updateUI();
-
-// -----------------------------------
-// メイン関数
-// -----------------------------------
-
-// 楽曲制作（クリック）処理
-function produceMusic() {
-    if (playerState.uiState !== "FREE") return; // UIロック中は実行しない
-
-    playerState.productionCount++;
-    
-    // ファンとマネーの増加（ベース値 + 機材効果）
-    const baseFanIncrease = 10 + Math.floor(playerState.trend / 10);
-    const baseMoneyIncrease = 50;
-
-    let totalFanIncrease = baseFanIncrease;
-    let totalMoneyIncrease = baseMoneyIncrease;
-
-    // 機材による効果を合算
-    for (const itemName in playerState.equipment) {
-        const item = playerState.equipment[itemName];
-        totalFanIncrease += item.effect.fanIncrease;
-        totalMoneyIncrease += item.effect.moneyIncrease;
-    }
-
-    playerState.fans += totalFanIncrease;
-    playerState.money += totalMoneyIncrease;
-
-    // トレンド度の増減ロジック (簡易版)
-    // 制作すると少し上がり、50より離れると戻りやすくする
-    const trendChange = Math.max(1, 5 - Math.abs(playerState.trend - 50) / 10);
-    playerState.trend = Math.min(100, playerState.trend + trendChange);
-
-    updateUI();
-    
-    // ストーリーチェック (今はスキップ)
-    // checkStory();
-}
-
-// -----------------------------------
-// ガチャ関連
-// -----------------------------------
-
-/**
- * ランクの重みに基づいて、ランダムなランクを選択する
- */
-function getGachaRank() {
-    const totalWeight = Object.values(GACHA_RATES).reduce((sum, weight) => sum + weight, 0);
-    let randomNum = Math.random() * totalWeight;
-
-    for (const rank in GACHA_RATES) {
-        randomNum -= GACHA_RATES[rank];
-        if (randomNum <= 0) {
-            return rank;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORLD1 - Re:Start Game</title>
+    <style>
+        /* ------------------- */
+        /* style-v2.css の内容をすべて含む */
+        /* ------------------- */
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background-color 1s ease;
+            padding-bottom: 50px; 
         }
-    }
-    return 'N'; // フォールバック
-}
 
-/**
- * 選択されたランクのアイテムの中からランダムに一つ選ぶ
- */
-function getGachaItem(rank) {
-    const items = EQUIPMENT_LIST.filter(item => item.rank === rank);
-    // すでに持っているアイテムを除外 (ここでは簡易的に、常に取得できるようにしておく)
-    
-    // ランダムに選ぶ
-    const randomIndex = Math.floor(Math.random() * items.length);
-    return items[randomIndex];
-}
+        #game-container {
+            width: 90%;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+        }
 
-/**
- * ガチャを回すメイン処理
- */
-function executeGacha() {
-    if (playerState.uiState !== "FREE") return;
-    if (playerState.money < GACHA_COST) {
-        displayDialog("お金が足りません...");
-        return;
-    }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-    playerState.money -= GACHA_COST;
-    playerState.uiState = "GACHA"; // ガチャ中はロック
+        #stats {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
 
-    const rank = getGachaRank();
-    const item = getGachaItem(rank);
-    
-    // 簡易演出 (1秒後に結果を表示)
-    displayDialog("アイテムを検索中...");
+        /* ------------------- */
+        /* 部屋の進化のベース */
+        /* ------------------- */
+        #room-view {
+            position: relative;
+            height: 300px;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: background-color 1.5s ease;
+        }
 
-    setTimeout(() => {
-        
-        let message = `**${item.rank}** のアイテムをゲット！\n\n`;
-        message += `『${item.name}』\n${item.flavor}`;
-        
-        // プレイヤーの状態にアイテムを登録
-        playerState.equipment[item.name] = item;
+        /* 全ての要素の初期設定 */
+        #room-view > div {
+            position: absolute;
+            transition: all 0.8s ease;
+            box-shadow: none;
+            display: none; /* デフォルトでは非表示 */
+        }
 
-        displayDialog(message, true); // true: UIをFREEに戻さない
-        updateUI();
+        /* ------------------- */
+        /* デスク (アイソメトリック風の傾き) */
+        /* ------------------- */
+        #desk {
+            display: block; 
+            bottom: 50px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #4a3c3c;
+            z-index: 10;
+            /* 斜め上から見下ろす傾き */
+            transform: perspective(400px) rotateX(20deg) skewX(-10deg); 
+            transform-origin: bottom;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
 
-    }, 1000); // 1秒待機
-}
+        /* ------------------- */
+        /* プレイヤーのドット絵表現 (影絵) - 位置と傾きを微調整 */
+        /* ------------------- */
+        #player {
+            display: block; 
+            bottom: 60px; 
+            left: 50%;
+            /* 傾きを少し強めて、座っている立体感を出す */
+            transform: translateX(-50%) perspective(400px) rotateX(15deg); 
+            width: 60px; 
+            height: 80px; 
+            background-color: transparent;
+            z-index: 17;
+        }
+        /* 頭部 */
+        #player::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15px; 
+            width: 30px;
+            height: 30px;
+            background-color: #333; 
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px #222;
+        }
+        /* 体（フードや服の表現） */
+        #player::after {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 5px; 
+            width: 50px; 
+            height: 55px; 
+            background-color: #333;
+            border-radius: 5px 5px 0 0;
+        }
 
-// -----------------------------------
-// UI & ステージ管理
-// -----------------------------------
+        /* 🤚 キーボードを叩く手の表現 (デスクの上) */
+        #room-view::before {
+            content: ''; 
+            position: absolute;
+            bottom: 52px; 
+            left: 40%;
+            width: 15px;
+            height: 3px; 
+            background-color: #333; 
+            z-index: 20;
+            border: 1px solid #222;
+            transform: perspective(400px) rotateX(20deg) skewX(-10deg);
+        }
+        #room-view::after {
+            content: ''; 
+            position: absolute;
+            bottom: 52px; 
+            left: 55%;
+            width: 15px; 
+            height: 3px; 
+            background-color: #333;
+            z-index: 20;
+            border: 1px solid #222;
+            transform: perspective(400px) rotateX(20deg) skewX(-10deg);
+        }
 
-// UIの更新
-function updateUI() {
-    fanCountElement.textContent = playerState.fans.toLocaleString();
-    moneyCountElement.textContent = playerState.money.toLocaleString();
-    
-    // 現在のファン数に基づいたステージの決定
-    let currentStage = 0;
-    if (playerState.fans >= 2000000) currentStage = 4;
-    else if (playerState.fans >= 1000000) currentStage = 3;
-    else if (playerState.fans >= 100000) currentStage = 2;
-    else if (playerState.fans >= 10000) currentStage = 1;
-    else currentStage = 0;
-
-    // room-viewのクラスを更新してCSSを反映させる
-    roomView.className = `stage-${currentStage}`;
-
-    // プレイヤーのトレンド度の表示（今はUIには出さない）
-    console.log(`現在のトレンド度: ${playerState.trend}`);
-}
-
-/**
- * ダイアログにテキストを表示し、UIの状態を制御する
- * @param {string} text - 表示するテキスト
- * @param {boolean} isGachaResult - ガチャ結果表示かどうか (ガチャ結果表示後、クリックでFREEに戻す)
- */
-function displayDialog(text, isGachaResult = false) {
-    dialogText.innerHTML = text.replace(/\n/g, '<br>'); // 改行をHTMLタグに変換
-
-    if (isGachaResult) {
-        // ガチャ結果表示中は、ダイアログクリックでFREEに戻るように設定
-        dialogBox.onclick = () => {
-            playerState.uiState = "FREE";
-            dialogText.textContent = "(タップしてセリフを表示)";
-            dialogBox.onclick = dialogClick; // 元のクリック動作に戻す
-            updateUI();
-        };
-    } else {
-        // 通常のダイアログは、即座にFREEに戻す（今は簡易的なため）
-        playerState.uiState = "FREE"; 
-    }
-}
-
-// ダイアログのクリック処理 (今は何もしない)
-function dialogClick() {
-    // ストーリーが有効な時だけ何かする
-    if (playerState.uiState === "GACHA") {
-        // ガチャ結果がクリックされるのを待っている
-        return; 
-    }
-    displayDialog("(タップしてセリフを表示)");
-}
+        /* ------------------- */
+        /* Stage 0: 初期衝動 (0〜9999人) */
+        /* ------------------- */
+        .stage-0 #room-view {
+            background-color: #1a1a1a;
+        }
+        .stage-0 #pc {
+            display: block; 
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg); 
+            transform-origin: center bottom;
+            width: 80px;
+            height: 50px;
+            background-color: #333; 
+            border-radius: 2px 2px 0 0;
+            z-index: 15;
+            /* 縁を明るくして目立たせる */
+            border: 2px solid #fff; 
+            box-sizing: border-box;
+        }
 
 
-// -----------------------------------
-// イベントリスナーのセットアップ
-// -----------------------------------
-produceButton.addEventListener('click', produceMusic);
-dialogBox.addEventListener('click', dialogClick);
+        /* ------------------- */
+        /* Stage 1: 初期の成功 (1万〜99999人) */
+        /* ------------------- */
+        .stage-1 #room-view {
+            background-color: #2a2a2a;
+        }
+        /* 外付けモニター追加 */
+        .stage-1 #monitor-main {
+            display: block; 
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
+            transform-origin: center bottom;
+            width: 120px;
+            height: 80px;
+            background-color: #111; 
+            border: 2px solid #555;
+            z-index: 12;
+        }
+        /* 付箋が画面端に1枚 */
+        .stage-1 #post-it {
+            display: block; 
+            bottom: 110px;
+            left: calc(50% + 50px);
+            width: 15px;
+            height: 15px;
+            background-color: #ffeb3b; 
+            z-index: 13;
+            transform: perspective(400px) rotateX(15deg) skewX(-5deg);
+        }
+        /* ノートPCはサブとして残るが小さくなる */
+        .stage-1 #pc {
+            display: block; 
+            bottom: 75px;
+            left: 35%; 
+            transform: perspective(400px) rotateX(15deg) skewX(-5deg);
+            transform-origin: center bottom;
+            width: 60px;
+            height: 35px;
+            background-color: #444;
+            z-index: 15;
+            border: 1px solid #fff; 
+            box-sizing: border-box;
+        }
 
 
-// ★アクションボタンエリアにガチャボタンを追加★
-function setupGachaButton() {
-    const gachaButton = document.createElement('button');
-    gachaButton.id = 'gacha-button';
-    gachaButton.textContent = `機材ガチャ (${GACHA_COST}G)`;
-    gachaButton.addEventListener('click', executeGacha);
-    actionsContainer.appendChild(gachaButton);
-}
+        /* ------------------- */
+        /* Stage 2: 本格的な活動 (10万〜999999人) */
+        /* ------------------- */
+        .stage-2 #room-view {
+            background-color: #3a3a3a;
+        }
+        /* MIDIキーボード追加 */
+        .stage-2 #keyboard {
+            display: block; 
+            bottom: 50px;
+            left: 65%;
+            width: 80px;
+            height: 25px;
+            background: repeating-linear-gradient(90deg, #fff 0, #fff 10%, #111 10%, #111 20%);
+            z-index: 15;
+            transform: perspective(400px) rotateX(20deg) skewX(-10deg);
+        }
+        /* オーディオIF追加 */
+        .stage-2 #audio-if {
+            display: block; 
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg);
+            width: 40px;
+            height: 25px;
+            background-color: #222;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            z-index: 16;
+        }
+        /* モニターはメインとして残る */
+        .stage-2 #monitor-main {
+            display: block;
+        }
 
-setupGachaButton();
+
+        /* ------------------- */
+        /* Stage 3: トップ層への挑戦 (100万〜199.9万人) */
+        /* ------------------- */
+        .stage-3 #room-view {
+            background-color: #404050;
+        }
+        /* デュアルモニター化 (モニターサブ追加) */
+        .stage-3 #monitor-main {
+            left: 40%;
+            transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
+        }
+        .stage-3 #monitor-sub {
+            display: block; 
+            bottom: 90px;
+            left: 60%;
+            transform: translateX(-50%) perspective(400px) rotateX(15deg) skewX(-5deg);
+            transform-origin: center bottom;
+            width: 120px;
+            height: 80px;
+            background-color: #111;
+            border: 2px solid #555;
+            z-index: 12;
+        }
+        /* マイクアームとマイク */
+        .stage-3 #mic-arm {
+            display: block; 
+            bottom: 180px;
+            left: 75%;
+            width: 3px;
+            height: 50px;
+            background-color: #777;
+            transform: perspective(400px) rotateX(10deg) skewX(-5deg);
+            transform-origin: bottom center;
+            z-index: 14;
+        }
+        .stage-3 #mic-arm::before { 
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -5px;
+            width: 15px;
+            height: 15px;
+            background-color: #555;
+            border-radius: 3px;
+        }
+        /* 観葉植物（チル要素） */
+        .stage-3 #plant {
+            display: block; 
+            bottom: 60px;
+            left: 10%;
+            width: 20px;
+            height: 40px;
+            background-color: #0c0;
+            border-bottom: 5px solid #630;
+            z-index: 15;
+            transform: perspective(400px) rotateX(15deg) skewX(-5deg);
+        }
+
+
+        /* ------------------- */
+        /* Stage 4: プロフェッショナル (200万人〜) */
+        /* ------------------- */
+        .stage-4 #room-view {
+            background-color: #222530;
+        }
+        /* 夜景が見える窓 (壁の背景として) */
+        .stage-4 #window {
+            display: block; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111;
+            box-shadow: inset 0 0 50px rgba(0, 200, 255, 0.2);
+            background-image: linear-gradient(to right, 
+                #ff0 1px, transparent 1px, transparent 5px, 
+                #f00 6px, transparent 6px, transparent 10px),
+            repeating-linear-gradient(to bottom, #333 0, #333 10px, #222 10px, #222 20px);
+            background-size: 100% 100%, 10px 10px; 
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        /* スピーカー増設 (左右に追加) */
+        .stage-4 #speaker-left {
+            display: block; 
+            bottom: 75px;
+            left: 20%;
+            width: 25px;
+            height: 50px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            z-index: 12;
+            transform: perspective(400px) rotateX(15deg) skewX(-5deg);
+        }
+        .stage-4 #speaker-right {
+            display: block; 
+            bottom: 75px;
+            left: 80%;
+            width: 25px;
+            height: 50px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            z-index: 12;
+            transform: perspective(400px) rotateX(15deg) skewX(-5deg);
+        }
+
+        /* 椅子グレードアップ */
+        .stage-4 #chair {
+            display: block; 
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%) perspective(400px) rotateX(20deg) skewX(-10deg);
+            width: 60px;
+            height: 120px;
+            background-color: #444;
+            border-radius: 5px 5px 0 0;
+            z-index: 5;
+            background-image: linear-gradient(135deg, #f00 25%, transparent 25%),
+                              linear-gradient(-135deg, #f00 25%, transparent 25%);
+            background-size: 10px 10px;
+            background-position: 0 0, 0 5px;
+            opacity: 0.8;
+        }
+
+        /* ------------------- */
+        /* コメントストリーム (省略) */
+        /* ------------------- */
+        #comment-stream {
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .comment {
+            margin: 2px 0;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        /* ------------------- */
+        /* ダイアログボックス (省略) */
+        /* ------------------- */
+        #dialog-box {
+            cursor: pointer;
+            background: #111;
+            border: 2px solid #555;
+            padding: 15px;
+            min-height: 50px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        #dialog-text {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        #story-marker {
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            background-color: #007bff;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 3px;
+            display: none;
+        }
+
+        /* ------------------- */
+        /* アクション (省略) */
+        /* ------------------- */
+        #actions {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="stage-0">
+    <div id="game-container">
+        <header>
+            <h1 id="world-title">WORLD1</h1>
+            <div id="stats">
+                ファン数: <span id="fan-count">0</span>　|　お金: $<span id="money-count">0</span>
+            </div>
+        </header>
+
+        <div id="room-view">
+            <div id="player"></div> 
+            <div id="window"></div>
+            <div id="desk"></div>
+            <div id="chair"></div>
+            <div id="pc"></div>
+            <div id="monitor-main"></div>
+            <div id="monitor-sub"></div>
+            <div id="post-it"></div>
+            <div id="keyboard"></div>
+            <div id="audio-if"></div>
+            <div id="mic-arm"></div>
+            <div id="speaker-left"></div>
+            <div id="speaker-right"></div>
+            <div id="plant"></div>
+        </div>
+
+        <div id="comment-stream">
+        </div>
+
+        <div id="dialog-box">
+            <div id="story-marker" style="display: none;">STORY</div>
+            <p id="dialog-text">(タップしてセリフを表示)</p>
+        </div>
+
+        <div id="actions">
+            <button id="produce-music-button">楽曲制作</button>
+            <button id="reincarnate-button" style="display: none;">[新しく始める]</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
