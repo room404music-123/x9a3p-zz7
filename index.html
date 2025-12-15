@@ -2,9 +2,16 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width-device-width, initial-scale=1.0">
     <title>WORLD1 - Re:Start Game</title>
     <style>
+        /* ------------------- */
+        /* 🚨 デバッグ用: 全要素に赤い枠線をつけて重なりを可視化 */
+        /* ------------------- */
+        * {
+            /* outline: 1px solid rgba(255, 0, 0, 0.5); */ /* 普段はコメントアウト */
+        }
+        
         /* ------------------- */
         /* style-v2.css の内容をすべて含む */
         /* ------------------- */
@@ -19,6 +26,8 @@
             margin: 0;
             transition: background-color 1s ease;
             padding-bottom: 50px; 
+            /* pointer-eventsの整理: body全体を自動にし、他の要素で制御 */
+            pointer-events: auto; 
         }
 
         #game-container {
@@ -51,6 +60,8 @@
             margin-bottom: 20px;
             overflow: hidden;
             transition: background-color 1.5s ease;
+            /* z-indexを下げ、下のダイアログを邪魔しないように */
+            z-index: 5; 
         }
 
         /* 全ての要素の初期設定 */
@@ -365,7 +376,7 @@
         }
 
         /* ------------------- */
-        /* ダイアログボックス (省略) */
+        /* ダイアログボックス */
         /* ------------------- */
         #dialog-box {
             cursor: pointer;
@@ -376,6 +387,9 @@
             margin-bottom: 20px;
             border-radius: 5px;
             position: relative;
+            /* 確実に操作を受け付けるようz-indexを上げる */
+            z-index: 10; 
+            pointer-events: auto; 
         }
 
         #dialog-text {
@@ -402,6 +416,9 @@
         #actions {
             display: flex;
             justify-content: space-around;
+            /* 確実に操作を受け付けるようz-indexを上げる */
+            z-index: 10; 
+            pointer-events: auto; 
         }
 
         button {
@@ -459,7 +476,7 @@
             <p id="dialog-text">(タップしてセリフを表示)</p>
         </div>
         
-        <div id="inventory-list" style="margin-top: 5px; padding: 10px; background: #222; border-radius: 5px; max-height: 150px; overflow-y: auto; margin-bottom: 20px;">
+        <div id="inventory-list" style="margin-top: 5px; padding: 10px; background: #222; border-radius: 5px; max-height: 150px; overflow-y: auto; margin-bottom: 20px; z-index: 10;">
             <p style="font-weight: bold; margin: 0 0 5px 0;">所持機材:</p>
             <ul id="inventory-ul" style="list-style: none; padding: 0; margin: 0;">
                 </ul>
