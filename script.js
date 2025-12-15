@@ -1,316 +1,237 @@
-// --- ゲームの状態を管理する変数 ---
-let fans = 0;
-let money = 0;
-let productionCount = 0;
-let reincarnationCount = 0; // 転生回数
-let isStoryActive = false; // ストーリー進行中のボタン無効化に使用
-
-// セリフ進行管理
-let currentDialog = [];
-let currentLineIndex = 0;
-
-// ストーリーの既読を管理するフラグ（バグ防止と既読管理に使用）
-const storyFlags = {
-    initial: false, 
-    afterFirstProduction: false, 
-    fan1: false, 
-    production10: false, 
-    fan10: false, 
-    fan100: false, 
-    fan1000: false, 
-    fan10000: false, 
-    fan50000_pre: false,
-    
-    // コメント制御用のフラグ
-    commentsStarted: false,
-    startCommentsAfterEnd: false
+// ===================================
+// GLOBAL VARIABLES (プレイヤーの状態)
+// ===================================
+let playerState = {
+    fans: 0,
+    money: 5000, // 初期マネーを増やしてガチャを回せるように
+    trend: 50,   // トレンド度の初期値 (0-100)
+    productionCount: 0,
+    reincarnationCount: 0,
+    // ★ここに追加した機材の情報が入る★
+    equipment: {}, 
+    // UIの状態管理 (FREE, STORY, GACHAなど)
+    uiState: "FREE" 
 };
 
-// --- セリフデータ (タップで1行ずつ進むよう、配列でデータ化) ---
-const STORY_DATA = {
-    // これらのセリフが「STORY」として表示されます
-    initial: [ "最近、DTMというものに興味がある。", "とりあえず小さなノートパソコンとヘッドホンを買った。", "今日から私もクリエイター.....？", "浮かれる前に一曲作ってみよう。" ],
-    afterFirstProduction: [ "意外とパソコンの操作が難しかった。", "某動画投稿サイトに曲をアップしてみたものの誰にも見つかる気がしない。", "とりあえず今日は寝よう。" ],
-    fan1: [ "....。", "よく寝たな。", "あ、", "パソコン、閉じていなかったのか。", "電気代が高くなりそうだな。", "とりあえず閉じておこう。", "....一件のコメント？", "「めちゃくちゃ好きです！センスあると思います！」", "ああ、私の曲を聴いてくれる人は、いたんだ。", "やる気が湧いてくる。", "私にとって一番最初のこのファンを、絶対大事にしよう。" ],
-    production10: [ "曲作りにも慣れて来たな。", "ファン数も順調に増えている。", "ご褒美に旅行でもするか。" ],
-    fan10: [ "ふと、DTMを始める前の事を考える。", "これまで見てきた配信者は皆ファンが数十万人いた。", "でも、ファン数10人に喜んでいる自分がいる。", "自然に笑みが溢れる。", "これが、古参ってやつか。" ],
-    fan100: [ "いつのまにかファンの数が増えていた。これだけの人が私の音楽を愛してくれている...。", "とても感慨深い。", "ここまで来たらもう止まれない。", "折角だから目標を決めてみよう。", "次の目標は..." ],
-    fan1000: [ "1000という数字は大きくもあり小さくもある。", "全体的に見たら少ないこの数字も、私にとっては大き過ぎる数字だ。", "1000人が私の音楽を待ち続けていることに少しプレッシャーを感じてしまう。", "大丈夫。これは趣味なのだから。", "次の目標は..." ],
-    fan10000: [ "最近の再生数が右肩上がりだと思ったらファン数はもう1万人らしい。あまり実感が湧かないがまあ活動者の中では早めに1万人を達成しているはずだろう。", "楽しい。ワクワクする。", "ここからどうなるか楽しみだ。", "次の目標は..." ],
-    fan50000_pre: [ 
-        "最近ファンが増えない。", 
-        "ある配信者の言葉を思い出す。", 
-        "どんな活動者も勢いがあるのは最初だけ。",
-        "あとは廃れていくのみなのだ。",
-        "現実を突きつけられると少し悲しくなる。", 
-        "あれ。",
-        "私は何のためにこの活動を始めたのか。",
-        "趣味じゃなかったのか？",
-        "趣味なら、何も心配することは無いはずなのに。",
-        "私は承認欲求の塊になってしまったようだ。", 
-        "....転生。",
-        "一般的に一度活動を終了した人が、キャラクター、名前、設定などを一新し、別の新しい活動者として再デビューすること(私調べ)だ。",
-        "これで新しい視聴者を得られるなら。",
-        "このアカウントを消して新しい音楽家になれば。",
-        "...",
-        "目標を達成できるかもしれない。",
-        "【[新しく始める] ボタンが解放されました】"
-    ],
-    production_start: [ "我ながら、いいアイデアが浮かんだ。早速、楽曲制作に取り掛かろう。", "今日は音が逃げない気がする。", "静かな夜だ。作るなら今。" ],
-    production_end: [ "……悪くない。", "これは、ちゃんと届きそうだ。", "もう一度だけ、聴き直す。" ]
+// ===================================
+// STORY & GACHA DATA (ガチャ排出率)
+// ===================================
+
+const GACHA_COST = 500;
+
+// ★シア提案の排出率を採用 (遊びやすさ重視)
+const GACHA_RATES = {
+    'N': 55,
+    'R': 30,
+    'SR': 10,
+    'SSR': 5
 };
 
-const COMMENTS = [
-    "いい曲", "落ち着く", "これイヤホン推奨", "作業用に助かる", "この音どこから？", 
-    "前の曲の方が好きだった", "最近路線変わった？", "伸びたね〜", 
-    "古参です", "この人まだ聴いてる人いる？", "昔は良かったおじさん", 
-    "この人の影響でDTM始めた"
+// 仮の機材アイテムリスト（今は機材ガチャのみ）
+const EQUIPMENT_LIST = [
+    // N (55%)
+    { name: "ノイズ低減イヤホン N", rank: "N", effect: { fanIncrease: 1, moneyIncrease: 1 }, flavor: "初期の必需品。音が漏れる。" },
+    { name: "中古のイス N", rank: "N", effect: { fanIncrease: 1, moneyIncrease: 1 }, flavor: "座り心地は最悪だが、まあ座れる。" },
+    // R (30%)
+    { name: "格安モニター R", rank: "R", effect: { fanIncrease: 3, moneyIncrease: 3 }, flavor: "画面が少し明るくなった。気分が良い。" },
+    { name: "普通のキーボード R", rank: "R", effect: { fanIncrease: 3, moneyIncrease: 3 }, flavor: "指に吸い付く感触が心地よい。" },
+    // SR (10%)
+    { name: "高性能PC SR", rank: "SR", effect: { fanIncrease: 10, moneyIncrease: 10 }, flavor: "レンダリング速度が大幅に向上した。時間短縮は正義。" },
+    { name: "マイクセット SR", rank: "SR", effect: { fanIncrease: 10, moneyIncrease: 10 }, flavor: "歌ってみたにも挑戦できる！" },
+    // SSR (5%)
+    { name: "ゲーミングチェア SSR", rank: "SSR", effect: { fanIncrease: 30, moneyIncrease: 30 }, flavor: "疲れを知らない身体を手に入れた。作業効率爆上がり！" },
+    { name: "防音室（簡易） SSR", rank: "SSR", effect: { fanIncrease: 50, moneyIncrease: 50 }, flavor: "夜中でも思いっきり音が出せる最高の環境。" }
 ];
 
-// DOM要素のキャッシュ
-const dialogTextEl = document.getElementById('dialog-text');
-const storyMarkerEl = document.getElementById('story-marker');
-const produceButtonEl = document.getElementById('produce-music-button');
-const fanCountEl = document.getElementById('fan-count');
-const moneyCountEl = document.getElementById('money-count');
-const reincarnateButtonEl = document.getElementById('reincarnate-button');
 
-// --- ファン数とお金の表示、部屋の進化を更新する関数 ---
-function updateStats() {
-    fanCountEl.textContent = fans.toLocaleString();
-    moneyCountEl.textContent = money.toLocaleString();
-    
-    // 部屋の進化（CSSクラスの切り替え）
-    let stage = 0;
-    
-    // ★修正箇所：新しいステージ判定ロジックを適用
-    if (fans >= 2000000) stage = 4;        // 200万人以上
-    else if (fans >= 1000000) stage = 3;   // 100万人以上
-    else if (fans >= 100000) stage = 2;    // 10万人以上
-    else if (fans >= 10000) stage = 1;     // 1万人以上
-    // 1万人未満は stage 0 のまま
+// ===================================
+// DOM ELEMENTS & INITIAL SETUP
+// ===================================
+const fanCountElement = document.getElementById('fan-count');
+const moneyCountElement = document.getElementById('money-count');
+const produceButton = document.getElementById('produce-music-button');
+const dialogBox = document.getElementById('dialog-box');
+const dialogText = document.getElementById('dialog-text');
+const roomView = document.getElementById('room-view');
+const actionsContainer = document.getElementById('actions');
 
-    document.body.className = `stage-${stage}`;
-    
-    // 転生ボタンの表示制御
-    if (storyFlags.fan50000_pre) {
-        reincarnateButtonEl.style.display = 'block';
-    } else {
-        reincarnateButtonEl.style.display = 'none';
-    }
-}
+// 初期表示を更新
+updateUI();
 
-// --- コメントをランダムに流す関数 ---
-function addRandomComment() {
-    const commentEl = document.createElement('p');
-    const randomComment = COMMENTS[Math.floor(Math.random() * COMMENTS.length)];
-    
-    commentEl.textContent = randomComment;
-    commentEl.className = 'comment';
-    
-    const stream = document.getElementById('comment-stream');
-    stream.prepend(commentEl);
-    
-    // 古いコメントを削除してメモリを節約
-    if (stream.children.length > 5) {
-        stream.removeChild(stream.lastChild);
-    }
-}
+// -----------------------------------
+// メイン関数
+// -----------------------------------
 
-// --- コメントストリームを開始する関数（ファン1のストーリー完了後に一度だけ呼ばれる） ---
-function startCommentStream() {
-    if (!storyFlags.commentsStarted) {
-        // 5秒ごとにコメントを流す
-        setInterval(addRandomComment, 5000); 
-        storyFlags.commentsStarted = true;
-    }
-}
-
-// --- ストーリーの進行を開始する（モーダル開始） ---
-function startStory(storyKey) {
-    if (isStoryActive) return; 
-
-    isStoryActive = true;
-    produceButtonEl.disabled = true; // ボタン無効化
-
-    // STORYマーカーを表示
-    storyMarkerEl.style.display = 'block';
-
-    currentDialog = STORY_DATA[storyKey];
-    currentLineIndex = 0;
-    
-    dialogTextEl.textContent = currentDialog[currentLineIndex];
-    storyFlags[storyKey] = true; 
-
-    // 初回制作でファン1を確実にする処理
-    if (storyKey === 'afterFirstProduction' && fans === 0) {
-        fans = 1; 
-        updateStats();
-    }
-    
-    // ファン1のストーリーが終わった後にコメントを開始するためのフラグを設定
-    if (storyKey === 'fan1') {
-        storyFlags.startCommentsAfterEnd = true;
-    }
-}
-
-// --- 画面タップでセリフを一行進める（タップイベントハンドラー） ---
-function advanceDialog() {
-    if (!isStoryActive) return;
-
-    currentLineIndex++;
-
-    if (currentLineIndex < currentDialog.length) {
-        // 次の行を表示
-        dialogTextEl.textContent = currentDialog[currentLineIndex];
-    } else {
-        // ストーリー終了（モーダル解除）
-        isStoryActive = false;
-        produceButtonEl.disabled = false; // ボタン有効化
-        
-        // STORYマーカーを非表示
-        storyMarkerEl.style.display = 'none'; 
-        
-        dialogTextEl.textContent = "タップしてセリフを表示"; 
-        
-        // --- コメントストリームの開始チェック（ファン1のストーリーが完了したか） ---
-        if (storyFlags.startCommentsAfterEnd) {
-            startCommentStream(); // コメントの流れをスタート
-            storyFlags.startCommentsAfterEnd = false; // フラグをリセット
-        }
-    }
-}
-
-// --- ストーリーの条件をチェックして表示する関数（優先度管理） ---
-function checkAndDisplayStory() {
-    if (isStoryActive) return; 
-    
-    let storyKey = null;
-
-    // 1. 転生を促す独り言（ファン数5万）- 最高優先度
-    if (fans >= 50000 && !storyFlags.fan50000_pre) {
-        storyKey = 'fan50000_pre';
-    } 
-    // 2. 楽曲制作10回目（制作ストーリー）- ファン数イベントより優先
-    else if (productionCount === 10 && !storyFlags.production10) {
-        storyKey = 'production10';
-    } 
-    // 3. ファン数イベント（降順でチェックし、飛び越しバグを防ぐ）
-    else if (fans >= 10000 && !storyFlags.fan10000) { storyKey = 'fan10000'; } 
-    else if (fans >= 1000 && !storyFlags.fan1000) { storyKey = 'fan1000'; } 
-    else if (fans >= 100 && !storyFlags.fan100) { storyKey = 'fan100'; } 
-    else if (fans >= 10 && !storyFlags.fan10) { storyKey = 'fan10'; } 
-    // 4. ファン数1（初回制作ストーリー後のみ）
-    else if (fans >= 1 && !storyFlags.fan1 && storyFlags.afterFirstProduction) {
-        storyKey = 'fan1';
-    } 
-    // 5. 初回楽曲制作後（制作回数1）
-    else if (productionCount === 1 && !storyFlags.afterFirstProduction) {
-        storyKey = 'afterFirstProduction';
-    }
-
-    if (storyKey) {
-        startStory(storyKey);
-    }
-}
-
-// --- 楽曲制作のメインロジック ---
+// 楽曲制作（クリック）処理
 function produceMusic() {
-    if (isStoryActive) return; 
+    if (playerState.uiState !== "FREE") return; // UIロック中は実行しない
 
-    // 制作開始時の独り言（演出）
-    const startDialogKey = STORY_DATA.production_start[Math.floor(Math.random() * STORY_DATA.production_start.length)];
-    dialogTextEl.textContent = startDialogKey;
+    playerState.productionCount++;
+    
+    // ファンとマネーの増加（ベース値 + 機材効果）
+    const baseFanIncrease = 10 + Math.floor(playerState.trend / 10);
+    const baseMoneyIncrease = 50;
 
-    // 制作中を表すためにボタンを一時的に無効化
-    produceButtonEl.disabled = true;
+    let totalFanIncrease = baseFanIncrease;
+    let totalMoneyIncrease = baseMoneyIncrease;
 
-    // 1.5秒後に制作完了のロジックを実行
+    // 機材による効果を合算
+    for (const itemName in playerState.equipment) {
+        const item = playerState.equipment[itemName];
+        totalFanIncrease += item.effect.fanIncrease;
+        totalMoneyIncrease += item.effect.moneyIncrease;
+    }
+
+    playerState.fans += totalFanIncrease;
+    playerState.money += totalMoneyIncrease;
+
+    // トレンド度の増減ロジック (簡易版)
+    // 制作すると少し上がり、50より離れると戻りやすくする
+    const trendChange = Math.max(1, 5 - Math.abs(playerState.trend - 50) / 10);
+    playerState.trend = Math.min(100, playerState.trend + trendChange);
+
+    updateUI();
+    
+    // ストーリーチェック (今はスキップ)
+    // checkStory();
+}
+
+// -----------------------------------
+// ガチャ関連
+// -----------------------------------
+
+/**
+ * ランクの重みに基づいて、ランダムなランクを選択する
+ */
+function getGachaRank() {
+    const totalWeight = Object.values(GACHA_RATES).reduce((sum, weight) => sum + weight, 0);
+    let randomNum = Math.random() * totalWeight;
+
+    for (const rank in GACHA_RATES) {
+        randomNum -= GACHA_RATES[rank];
+        if (randomNum <= 0) {
+            return rank;
+        }
+    }
+    return 'N'; // フォールバック
+}
+
+/**
+ * 選択されたランクのアイテムの中からランダムに一つ選ぶ
+ */
+function getGachaItem(rank) {
+    const items = EQUIPMENT_LIST.filter(item => item.rank === rank);
+    // すでに持っているアイテムを除外 (ここでは簡易的に、常に取得できるようにしておく)
+    
+    // ランダムに選ぶ
+    const randomIndex = Math.floor(Math.random() * items.length);
+    return items[randomIndex];
+}
+
+/**
+ * ガチャを回すメイン処理
+ */
+function executeGacha() {
+    if (playerState.uiState !== "FREE") return;
+    if (playerState.money < GACHA_COST) {
+        displayDialog("お金が足りません...");
+        return;
+    }
+
+    playerState.money -= GACHA_COST;
+    playerState.uiState = "GACHA"; // ガチャ中はロック
+
+    const rank = getGachaRank();
+    const item = getGachaItem(rank);
+    
+    // 簡易演出 (1秒後に結果を表示)
+    displayDialog("アイテムを検索中...");
+
     setTimeout(() => {
-        productionCount++;
         
-        if (productionCount > 1) {
-            fans += Math.floor(Math.random() * 8) + 2; // 2~9人増える
-        }
-        money += Math.floor(Math.random() * 500) + 100;
+        let message = `**${item.rank}** のアイテムをゲット！\n\n`;
+        message += `『${item.name}』\n${item.flavor}`;
         
-        updateStats();
-        
-        // 制作完了時の独り言（演出）を表示
-        const endDialogKey = STORY_DATA.production_end[Math.floor(Math.random() * STORY_DATA.production_end.length)];
-        dialogTextEl.textContent = endDialogKey;
-        
-        // ボタンを有効化
-        produceButtonEl.disabled = false;
-        
-        // 0.5秒の短い遅延の後、ファン数ストーリーのチェックに移行
-        setTimeout(() => {
-             // 待機メッセージに戻す
-            dialogTextEl.textContent = "タップしてセリフを表示";
-            // 制作後のメインストーリーチェック
-            checkAndDisplayStory(); 
-        }, 500); 
+        // プレイヤーの状態にアイテムを登録
+        playerState.equipment[item.name] = item;
 
-    }, 1500); // 1.5秒待機
+        displayDialog(message, true); // true: UIをFREEに戻さない
+        updateUI();
+
+    }, 1000); // 1秒待機
 }
 
-// --- 転生処理（[新しく始める]ボタンのロジック） ---
-function reincarnate() {
-    // ファン数5万は転生フラグを立てるためのトリガー。実際に転生する際の条件は緩く設定（ファン1以上でOKなど）
-    // 現状のロジックではファン5万でフラグが立つので、ここではフラグがあるかだけ確認
-    if (!storyFlags.fan50000_pre) return; 
+// -----------------------------------
+// UI & ステージ管理
+// -----------------------------------
 
-    reincarnationCount++;
+// UIの更新
+function updateUI() {
+    fanCountElement.textContent = playerState.fans.toLocaleString();
+    moneyCountElement.textContent = playerState.money.toLocaleString();
     
-    // リセットされるもの
-    fans = 0;
-    money = 0;
-    productionCount = 0;
-    
-    // ストーリーフラグをリセット（最終イベント以外）
-    for (let key in storyFlags) {
-        // 'commentsStarted'以外はすべてリセットし、初回セリフは再度表示
-        if (key !== 'commentsStarted') { 
-             storyFlags[key] = false;
-        }
-    }
+    // 現在のファン数に基づいたステージの決定
+    let currentStage = 0;
+    if (playerState.fans >= 2000000) currentStage = 4;
+    else if (playerState.fans >= 1000000) currentStage = 3;
+    else if (playerState.fans >= 100000) currentStage = 2;
+    else if (playerState.fans >= 10000) currentStage = 1;
+    else currentStage = 0;
 
-    // 転生回数に応じたセリフ（後の実装のためのプレースホルダー）
-    let reincarnateDialog;
-    if (reincarnationCount === 1) {
-        reincarnateDialog = "アカウントを一新。私は新しく生まれ変わった。";
-    } else if (reincarnationCount === 2) {
-        reincarnateDialog = "炎上したって、何度でもやり直せばいい。";
+    // room-viewのクラスを更新してCSSを反映させる
+    roomView.className = `stage-${currentStage}`;
+
+    // プレイヤーのトレンド度の表示（今はUIには出さない）
+    console.log(`現在のトレンド度: ${playerState.trend}`);
+}
+
+/**
+ * ダイアログにテキストを表示し、UIの状態を制御する
+ * @param {string} text - 表示するテキスト
+ * @param {boolean} isGachaResult - ガチャ結果表示かどうか (ガチャ結果表示後、クリックでFREEに戻す)
+ */
+function displayDialog(text, isGachaResult = false) {
+    dialogText.innerHTML = text.replace(/\n/g, '<br>'); // 改行をHTMLタグに変換
+
+    if (isGachaResult) {
+        // ガチャ結果表示中は、ダイアログクリックでFREEに戻るように設定
+        dialogBox.onclick = () => {
+            playerState.uiState = "FREE";
+            dialogText.textContent = "(タップしてセリフを表示)";
+            dialogBox.onclick = dialogClick; // 元のクリック動作に戻す
+            updateUI();
+        };
     } else {
-        reincarnateDialog = "私は、まだ作れる。";
-    }
-    
-    dialogTextEl.textContent = "Re:Start... " + reincarnateDialog;
-    
-    // 部屋の状態を初期に戻す
-    document.body.className = 'stage-0';
-    
-    // 転生ボタンを非表示に戻す
-    reincarnateButtonEl.style.display = 'none';
-
-    updateStats(); 
-    startStory('initial'); // 最初のセリフに戻る
-}
-
-// --- 初期化処理 ---
-function initGame() {
-    // DOM要素のイベントリスナー設定
-    produceButtonEl.onclick = produceMusic;
-    document.getElementById('dialog-box').onclick = advanceDialog; 
-    reincarnateButtonEl.onclick = reincarnate;
-    
-    updateStats(); 
-    
-    // 初回ロード時にストーリーが始まるように
-    if (!storyFlags.initial) {
-        startStory('initial'); 
+        // 通常のダイアログは、即座にFREEに戻す（今は簡易的なため）
+        playerState.uiState = "FREE"; 
     }
 }
 
-// ページが完全に読み込まれたらゲームを開始
-document.addEventListener('DOMContentLoaded', initGame);
+// ダイアログのクリック処理 (今は何もしない)
+function dialogClick() {
+    // ストーリーが有効な時だけ何かする
+    if (playerState.uiState === "GACHA") {
+        // ガチャ結果がクリックされるのを待っている
+        return; 
+    }
+    displayDialog("(タップしてセリフを表示)");
+}
+
+
+// -----------------------------------
+// イベントリスナーのセットアップ
+// -----------------------------------
+produceButton.addEventListener('click', produceMusic);
+dialogBox.addEventListener('click', dialogClick);
+
+
+// ★アクションボタンエリアにガチャボタンを追加★
+function setupGachaButton() {
+    const gachaButton = document.createElement('button');
+    gachaButton.id = 'gacha-button';
+    gachaButton.textContent = `機材ガチャ (${GACHA_COST}G)`;
+    gachaButton.addEventListener('click', executeGacha);
+    actionsContainer.appendChild(gachaButton);
+}
+
+setupGachaButton();
