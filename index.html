@@ -78,69 +78,46 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
 
-        /* ------------------- */
-        /* プレイヤーのドット絵表現 (影絵) - 位置と傾きを微調整 */
-        /* ------------------- */
-        #player {
-            display: block; 
-            bottom: 60px; 
-            left: 50%;
-            /* 傾きを少し強めて、座っている立体感を出す */
-            transform: translateX(-50%) perspective(400px) rotateX(15deg); 
-            width: 60px; 
-            height: 80px; 
-            background-color: transparent;
-            z-index: 17;
-        }
-        /* 頭部 */
-        #player::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 15px; 
-            width: 30px;
-            height: 30px;
-            background-color: #333; 
-            border-radius: 50%;
-            box-shadow: 0 0 0 1px #222;
-        }
-        /* 体（フードや服の表現） */
-        #player::after {
-            content: '';
-            position: absolute;
-            top: 25px;
-            left: 5px; 
-            width: 50px; 
-            height: 55px; 
-            background-color: #333;
-            border-radius: 5px 5px 0 0;
-        }
-
-        /* 🤚 キーボードを叩く手の表現 (デスクの上) */
-        #room-view::before {
-            content: ''; 
-            position: absolute;
-            bottom: 52px; 
-            left: 40%;
-            width: 15px;
-            height: 3px; 
-            background-color: #333; 
-            z-index: 20;
-            border: 1px solid #222;
-            transform: perspective(400px) rotateX(20deg) skewX(-10deg);
-        }
-        #room-view::after {
-            content: ''; 
-            position: absolute;
-            bottom: 52px; 
-            left: 55%;
-            width: 15px; 
-            height: 3px; 
-            background-color: #333;
-            z-index: 20;
-            border: 1px solid #222;
-            transform: perspective(400px) rotateX(20deg) skewX(-10deg);
-        }
+/* ------------------- */
+/* プレイヤーのドット絵表現 (影絵) - 位置と傾きを微調整 */
+/* ------------------- */
+#player {
+    display: block; 
+    bottom: 60px; /* デスクの奥、少し手前に移動 */
+    left: 50%;
+    /* 傾きを少し強めて、座っている立体感を出す */
+    transform: translateX(-50%) perspective(400px) rotateX(20deg); /* 傾きを少し強く */
+    width: 60px; 
+    height: 80px; 
+    background-color: transparent;
+    z-index: 17;
+}
+/* 頭部 */
+#player::before {
+    content: '';
+    position: absolute;
+    top: 5px; /* 頭を少し持ち上げる */
+    left: 15px; 
+    width: 30px;
+    height: 30px;
+    background-color: #333; 
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #222;
+}
+/* 体（服の表現） */
+#player::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 5px; 
+    width: 50px; 
+    height: 55px; 
+    background-color: #333;
+    border-radius: 5px 5px 0 0;
+    /* プレイヤーの「座り」を表現するために少し傾きを出す */
+    transform: perspective(400px) rotateX(-5deg); 
+    transform-origin: top;
+}
 
         /* ------------------- */
         /* Stage 0: 初期衝動 (0〜9999人) */
