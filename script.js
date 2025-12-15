@@ -25,7 +25,7 @@ const reincarnateButton = document.getElementById('reincarnate-button');
 const inventoryUl = document.getElementById('inventory-ul');
 
 // =================================================================
-// ストーリーとダイアログ管理 (省略 - 変更なし)
+// ストーリーとダイアログ管理
 // =================================================================
 
 let currentStory = null;
@@ -43,6 +43,7 @@ const STORY_DATA = {
     ],
 };
 
+// 状態をセーブ
 function saveGame() {
     const saveState = {
         ...playerState,
@@ -52,24 +53,41 @@ function saveGame() {
     console.log("Game Saved.");
 }
 
+// 状態をロード (★★★ 重点修正箇所 ★★★)
 function loadGame() {
     const saved = localStorage.getItem('world1_save');
     if (saved) {
         const loadedState = JSON.parse(saved);
         loadedState.readStories = new Set(loadedState.readStories);
-        console.log("Game Loaded.");
+        
+        // 🔴 致命的なバグ対策: ロード時に状態を検証
+        // ストーリーデータなしで'STORY'状態で復元すると永久ロックするため、強制的に'FREE'に戻す
+        if (loadedState.uiState === 'STORY') {
+            console.warn("Save data loaded with uiState='STORY'. Force resetting to 'FREE' to prevent lock.");
+            loadedState.uiState = 'FREE';
+        }
+
+        // ログ出力 (要求されたデバッグ情報)
+        console.log(">>> Load Success: Saved Data State <<<", {
+            fan: loadedState.fan,
+            money: loadedState.money,
+            uiState: loadedState.uiState,
+            readStoriesSize: loadedState.readStories.size
+        });
+
         return loadedState;
     }
-    console.log("No Save Data Found.");
+    console.log(">>> Load Fail: No Save Data Found. Starting New Game. <<<");
     return null;
 }
 
+// 状態のリセット
 function resetGame() {
-    // 🔴 デバッグ優先: 転生処理は引き続き無効化
+    // 転生処理は引き続き無効化
 }
 
 // ----------------------------------------------------------------
-// UIとステータスの更新 (省略 - 変更なし)
+// UIとステータスの更新
 // ----------------------------------------------------------------
 
 function updateUI() {
@@ -80,6 +98,14 @@ function updateUI() {
     console.log(`Current UI State: ${playerState.uiState}`);
 
     const isLocked = playerState.uiState !== 'FREE';
+
+    // 楽曲制作ボタンの有効/無効化（ボタンがガチャボタンの役割も兼ねるため、updateUIで制御）
+    // 🔴 ガチャボタン出現のデバッグとして、ファン数1000でボタンのテキストを仮に変更
+    if (playerState.fan >= 1000) {
+         produceButton.textContent = "ガチャ (デバッグ)";
+    } else {
+         produceButton.textContent = "楽曲制作";
+    }
 
     produceButton.disabled = isLocked;
 
@@ -120,7 +146,7 @@ function formatNumber(num) {
 }
 
 // ----------------------------------------------------------------
-// メインアクション (省略 - 変更なし)
+// メインアクション
 // ----------------------------------------------------------------
 
 function produceMusic() {
@@ -129,18 +155,30 @@ function produceMusic() {
         return;
     }
     
-    // 🔴 デバッグログ
     console.log(">>> produceMusic fired <<<");
 
-    playerState.fan += 100;
-    playerState.money += 5;
+    // 🔴 ガチャの条件が整っていたら、ここでガチャ処理に分岐させる
+    if (playerState.fan >= 1000) {
+        console.log("ガチャ条件達成。本来はここでガチャ処理へ。");
+        // startGacha(); // (未実装)
+        playerState.money -= 100;
+        playerState.fan += 5000;
+        playerState.inventory.push("マイク");
+    } else {
+        // 通常の楽曲制作
+        playerState.fan += 100;
+        playerState.money += 5;
+    }
     
+    // ストーリーチェックを挟む (ここで新しいストーリー開始の判定を入れる)
+    checkStoryTriggers(); 
+
     updateUI();
     saveGame();
 }
 
 // ----------------------------------------------------------------
-// ストーリーアクション (省略 - 変更なし)
+// ストーリーアクション
 // ----------------------------------------------------------------
 
 function startStory(storyName) {
@@ -160,13 +198,11 @@ function startStory(storyName) {
 }
 
 function advanceDialog() {
-    // 🔴 デバッグログ
     console.log(`advanceDialog fired - Index: ${storyIndex}, UI State: ${playerState.uiState}`);
     
     if (playerState.uiState !== 'STORY') {
-        // ロックフラグの解除ミスを疑い、ログを出して強制解除
-        console.warn("Dialog attempted to advance while UI was NOT 'STORY'. Force unlock.");
-        playerState.uiState = 'FREE'; // ⑥ 強制解除
+        console.warn("Dialog attempted to advance while UI was NOT 'STORY'. Force unlock and return.");
+        playerState.uiState = 'FREE'; 
         updateUI();
         return;
     }
@@ -196,54 +232,68 @@ function advanceDialog() {
 }
 
 // ----------------------------------------------------------------
-// 初期化とイベントリスナー (重要修正箇所)
+// ストーリートリガーチェック
+// ----------------------------------------------------------------
+
+function checkStoryTriggers() {
+    // 🔴 ストーリートリガーのロジックは今後ここに追記
+    // if (playerState.fan >= 10000 && !playerState.readStories.has('first_hit')) {
+    //    startStory('first_hit');
+    // }
+}
+
+
+// ----------------------------------------------------------------
+// 初期化とイベントリスナー
 // ----------------------------------------------------------------
 
 function checkInitialStory() {
+    // 🔴 初期ストーリーは loadGame で uiState が FREE に戻っていることを前提に実行
     if (!playerState.readStories.has('initial')) {
-        // 🔴 ⑥ デバッグ用に一時的に初期値を強制解除
-        playerState.uiState = 'FREE'; 
+        console.log("Initial story not read. Starting story.");
         startStory('initial');
         playerState.readStories.add('initial');
     } else {
+        console.log("Initial story already read. Ensuring UI State is FREE.");
         playerState.uiState = 'FREE';
     }
 }
 
 // イベントリスナーの設定
 document.addEventListener('DOMContentLoaded', () => {
+    // 🔴 デバッグログ (初期化順序確認)
+    console.log("--- DOMContentLoaded fired. Starting Init Sequence. ---");
+    
     updateUI();
     checkInitialStory();
     
-    // ① クリックイベントを強化: clickとtouchstartを併用
+    // イベントリスナーの登録
     produceButton.addEventListener('click', produceMusic);
     produceButton.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // クリックの二重発火防止
+        e.preventDefault(); 
         produceMusic();
     });
 
-    // ① dialogBoxにもtouchstartを追加
     dialogBox.addEventListener('click', advanceDialog);
     dialogBox.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // スクロール防止とclickの二重発火防止
+        e.preventDefault(); 
         advanceDialog();
     });
 
-    // 🔴 ⑦ タップが本当に届いているかのログ確認
+    // タップデバッグログは一旦コメントアウトし、ログを整理
+    /*
     document.addEventListener("pointerdown", e => {
-      console.log("--- Tap Event Debug ---");
-      console.log("tap target:", e.target);
-      const actualElement = document.elementFromPoint(e.clientX, e.clientY);
-      console.log("actual element at point:", actualElement);
-      // タップした要素が想定と違う、またはnullなら重なりを疑う
-      if (e.target !== actualElement) {
-          console.error("WARNING: Tap target mismatch! An overlay might be intercepting the tap.");
-      }
-      console.log("-----------------------");
+      // 省略
     });
-
+    */
 
     reincarnateButton.style.display = 'none';
 
     console.log("All event listeners registered, including touch support.");
+    // 🔴 デバッグログ (最終的なUI状態確認)
+    console.log("--- Initialization complete. Final State Check ---", {
+        fan: playerState.fan,
+        money: playerState.money,
+        uiState: playerState.uiState
+    });
 });
