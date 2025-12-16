@@ -10,140 +10,105 @@ const initialPlayerState = {
     readStories: new Set(),
 };
 
-// 🔴 🔴 🔴 究極の強制初期化フラグ 🔴 🔴 🔴
-// 
-// この行をデプロイ後、一度だけサイトを読み込めば全てのセーブデータが消去されます。
-// 
-// 🚨 初期化が完了したら、この行は必ず削除するかコメントアウトしてください！
-// localStorage.removeItem('world1_save'); 
-// localStorage.clear(); 
-// 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴 
+// 🔴 新規追加: デバッグフラグ (初期値: false)
+// リセット実行後に true に変えてデプロイし、リセットが走ったら false に戻す
+let debugAllowReset = false; 
 
 let playerState = loadGame() || initialPlayerState;
 
-// DOM要素の取得 (変更なし)
-const fanCountElement = document.getElementById('fan-count');
-const moneyCountElement = document.getElementById('money-count');
-const gameContainer = document.getElementById('game-container');
-const dialogBox = document.getElementById('dialog-box');
-const dialogTextElement = document.getElementById('dialog-text');
-const storyMarkerElement = document.getElementById('story-marker');
-const produceMusicButton = document.getElementById('produce-music-button'); 
-const reincarnateButton = document.getElementById('reincarnate-button'); 
-const inventoryUl = document.getElementById('inventory-ul');
+// ... (DOM要素の取得は変更なし)
 
-// =================================================================
-// ストーリーとダイアログ管理 (変更なし)
-// =================================================================
-
-let currentStory = null;
-let storyIndex = 0;
-
-const STORY_DATA = {
-    initial: [
-        { text: "最近、DTMというものに興味がある。", speaker: "自分" },
-        // ... (以下、STORY_DATAの内容は省略、変更なし)
-        { text: "PCとDAWソフトがあれば、誰でも音楽を作れる時代だ。", speaker: "自分" },
-        { text: "まずは趣味程度で、何か一つ曲を作ってみるか。" },
-        { text: "楽曲制作のボタンを押してみよう。", action: () => {
-             playerState.uiState = 'FREE'; 
-             saveGame();
-        } }
-    ],
-    second_step: [
-        { text: "いいね、初めての曲ができた。思ったよりファンが増えてるぞ。", speaker: "自分" },
-        { text: "次はもっと本格的な機材がほしいな。", speaker: "自分" },
-        { text: "この調子で、制作を続けていこう！" }
-    ]
-};
-
-function saveGame() {
-    const saveState = { ...playerState, readStories: Array.from(playerState.readStories) };
-    localStorage.setItem('world1_save', JSON.stringify(saveState));
-    console.log("Game Saved.");
-}
+// ----------------------------------------------------------------
+// セーブ/ロード (修正なし)
+// ----------------------------------------------------------------
+function saveGame() { /* 省略 */ }
 
 function loadGame() {
+    // 🔴 起動時ログの強化
     const saved = localStorage.getItem('world1_save');
+    let loadedState = null;
+
     if (saved) {
-        const loadedState = JSON.parse(saved);
+        loadedState = JSON.parse(saved);
         loadedState.readStories = new Set(loadedState.readStories);
         if (loadedState.uiState === 'STORY') {
             loadedState.uiState = 'FREE';
         }
-        console.log(">>> Load Success: Saved Data State <<<", loadedState);
-        // 🔴 ここで強制的にファン数とマネーが初期値になっているかチェック
-        if (loadedState.fan > 500000 || loadedState.money > 10000) { // 極端な異常値が残っていた場合
-             console.warn("異常値検出。ファン数とマネーを初期化します。");
-             loadedState.fan = 0;
-             loadedState.money = 0;
-             loadedState.inventory = [];
-             loadedState.readStories = new Set();
-             // 再度セーブし、クリーンなデータで上書き
-             localStorage.setItem('world1_save', JSON.stringify({...loadedState, readStories: []}));
-             return loadedState;
-        }
-        return loadedState;
+    } else {
+        loadedState = { ...initialPlayerState };
     }
-    console.log(">>> Load Fail: No Save Data Found. Starting New Game. <<<");
-    return null;
-}
 
-// ----------------------------------------------------------------
-// ⚠️ 注意: resetGame関数は一時的に再コメントアウト (reincarnateButtonの無効化のため)
-// ----------------------------------------------------------------
-function resetGame() {
-    console.log("Game Reset initiated: Clearing state and localStorage.");
-    playerState = { ...initialPlayerState };
-    playerState.readStories = new Set();
-    playerState.uiState = 'FREE'; 
-    localStorage.removeItem('world1_save');
-    updateUI(); 
-    location.reload(); 
-}
-
-// ----------------------------------------------------------------
-// UIとアクション関数群 (変更なし)
-// ----------------------------------------------------------------
-function updateUI() { /* 省略 */
-    fanCountElement.textContent = formatNumber(playerState.fan);
-    moneyCountElement.textContent = formatNumber(playerState.money);
-    updateRoomView();
-    updateInventoryUI();
-    updateActionButtons(); 
-    const isLocked = playerState.uiState !== 'FREE';
-    produceMusicButton.disabled = isLocked;
-    dialogBox.style.border = isLocked ? '2px solid #ffc107' : '2px solid #555';
-    storyMarkerElement.style.display = isLocked ? 'block' : 'none';
-}
-
-function updateActionButtons() {
-    produceMusicButton.style.display = 'block'; 
-    produceMusicButton.textContent = "楽曲制作"; 
-}
-// ... (以下、他のUI, Action, Story関数は変更なし)
-function produceMusic() { /* 省略 */ }
-function startStory(storyName) { /* 省略 */ }
-function advanceDialog() { /* 省略 */ }
-function checkStoryTriggers() { /* 省略 */ }
-
-// ----------------------------------------------------------------
-// 初期化とイベントリスナー
-// ----------------------------------------------------------------
-
-function checkInitialStory() { /* 省略 */ }
-
-document.addEventListener('DOMContentLoaded', () => {
+    // 🔴 起動時ログを console.table で出力
+    console.table({
+        'Fan': loadedState.fan,
+        'Money': loadedState.money,
+        'UI State': loadedState.uiState,
+        'Stories Read': loadedState.readStories.size,
+        'Debug Reset': debugAllowReset
+    });
     
-    // 🔴 ⚠️ 暫定対応: リセットボタンを再び非表示に戻す ⚠️ 🔴
+    // 🔴 安全リセットのロジック: debugAllowReset が true の場合のみ実行
+    if (debugAllowReset) {
+        console.warn("DEBUG RESET MODE: Forcing full game state and localStorage wipe.");
+        localStorage.removeItem('world1_save');
+        // 初期状態を返す
+        return { ...initialPlayerState, readStories: new Set() };
+    }
+    
+    return loadedState;
+}
+
+// ----------------------------------------------------------------
+// リセット機能 (再構築)
+// ----------------------------------------------------------------
+
+// ⚠️ この関数はもう使わない。リセットは debugAllowReset フラグで行う。
+function resetGame() {
+    console.warn("resetGame() function is deprecated. Use debugAllowReset flag for full wipe.");
+}
+
+// ----------------------------------------------------------------
+// 初期化とイベントリスナー (大幅修正)
+// ----------------------------------------------------------------
+
+// 🔴 イベントリスナー登録を分離し、より遅延したタイミングで実行
+function registerEventListeners() {
+    console.log("Registering Event Listeners...");
+    
+    // 楽曲制作ボタン
+    produceMusicButton.addEventListener('click', produceMusic);
+    produceMusicButton.addEventListener('touchstart', (e) => {
+        e.preventDefault(); 
+        produceMusic();
+    });
+
+    // ダイアログボックス
+    dialogBox.addEventListener('click', advanceDialog);
+    dialogBox.addEventListener('touchstart', (e) => {
+        e.preventDefault(); 
+        advanceDialog();
+    });
+
+    // 🔴 リセットボタンは非表示
     reincarnateButton.style.display = 'none'; 
+}
+
+function checkInitialStory() { /* 変更なし */ }
+
+// イベントリスナーの設定
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("--- DOMContentLoaded fired. Starting Init Sequence. ---");
     
     updateUI();
-    checkInitialStory();
     
-    // イベントリスナーの再登録 (変更なし)
-    produceMusicButton.addEventListener('click', produceMusic);
-    produceMusicButton.addEventListener('touchstart', (e) => { e.preventDefault(); produceMusic(); });
-    dialogBox.addEventListener('click', advanceDialog);
-    dialogBox.addEventListener('touchstart', (e) => { e.preventDefault(); advanceDialog(); });
+    // 🔴 ここでイベントリスナーは登録しない！
+
+    console.log("--- Initialization complete. Waiting for safe event registration. ---");
 });
+
+// 🔴 ページ上の全てのコンテンツが読み込まれてからイベントリスナーを登録
+window.onload = () => {
+    console.log("--- window.onload fired. Registering events and checking story. ---");
+    registerEventListeners();
+    checkInitialStory();
+}
