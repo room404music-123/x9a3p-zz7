@@ -1,186 +1,216 @@
-// --- 安全な初期化とデバッグユーティリティ ---
-// 開発環境判定（必要ならビルドフラグで切り替えてください）
-const IS_DEV = location.hostname === 'localhost' || location.search.includes('dev=1');
-
-// 起動時に開発用フラグを自動セット（ローカル開発のみ）
-if (IS_DEV) localStorage.setItem('debug_allow_reset', '1');
-
-// 名前空間付きキーの例: save.game
-function getDefaultState() {
-  return {
-    fans: 0,
+// =================================================================
+// プレイヤーの状態と初期設定
+// =================================================================
+const initialPlayerState = {
+    fan: 0,
     money: 0,
-    uiState: 'FREE',
-    storyProgress: 0
-  };
-}
+    stage: 0,
+    inventory: [],
+    uiState: 'FREE', 
+    readStories: new Set(),
+};
 
-// バリデーションユーティリティ
-function clampNumber(n, min, max) {
-  if (typeof n !== 'number' || Number.isNaN(n)) return min;
-  return Math.max(min, Math.min(max, n));
-}
+// 🔴 最終デバッグフラグ：ONにするとゲーム内デバッグメニューが表示される
+const IS_DEBUG_MODE = true; 
 
-// loadGame: セーブ読み込み + バリデーション + 可視化ログ
-function loadGame() {
-  let state;
-  try {
-    const raw = localStorage.getItem('save.game');
-    state = raw ? JSON.parse(raw) : getDefaultState();
-  } catch (err) {
-    console.warn('[DBG] loadGame: parse error, using default', err);
-    state = getDefaultState();
-  }
+let playerState = loadGame() || initialPlayerState;
 
-  // バリデーション（上限は適宜調整）
-  state.fans = clampNumber(Number(state.fans || 0), 0, 1e7);
-  state.money = clampNumber(Number(state.money || 0), 0, 1e9);
-  state.uiState = typeof state.uiState === 'string' ? state.uiState : 'FREE';
-  state.storyProgress = clampNumber(Number(state.storyProgress || 0), 0, 9999);
+// DOM要素の取得
+const fanCountElement = document.getElementById('fan-count');
+const moneyCountElement = document.getElementById('money-count');
+const dialogBox = document.getElementById('dialog-box');
+const dialogTextElement = document.getElementById('dialog-text');
+const storyMarkerElement = document.getElementById('story-marker');
+const produceMusicButton = document.getElementById('produce-music-button'); 
+const reincarnateButton = document.getElementById('reincarnate-button'); 
 
-  // グローバルに保持して UI 初期化で参照できるようにする
-  window.__GAME_STATE = state;
+// 🚨 エラー表示用のDOM要素 (前回導入)
+const errorIndicator = document.createElement('div');
+errorIndicator.id = 'error-indicator';
+errorIndicator.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; 
+    background: red; color: white; padding: 10px; 
+    text-align: center; font-weight: bold; z-index: 9999;
+    display: none;
+`;
+document.body.appendChild(errorIndicator);
 
-  // 可視化ログ（必ず出る）
-  console.table({
-    fans: state.fans,
-    money: state.money,
-    uiState: state.uiState,
-    storyProgress: state.storyProgress,
-    debugAllowReset: localStorage.getItem('debug_allow_reset') || '0'
-  });
 
-  return state;
-}
+// =================================================================
+// セーブ/ロード (リセット機能は loadGame から分離)
+// =================================================================
 
-// --- UI 初期化の堅牢化 ---
-// DOM 構築とイベント登録を分離して確実にハンドラを付ける
-function buildDOMIfNeeded() {
-  // 既存の DOM 構築ロジックをここに呼ぶ
-  if (typeof buildGameUI === 'function') {
-    buildGameUI();
-  } else {
-    console.warn('[DBG] buildGameUI not found; ensure DOM is created elsewhere');
-  }
-}
-
-function attachUIEventHandlers() {
-  // 例: 楽曲制作ボタン
-  const makeBtn = document.querySelector('.make-song-btn');
-  if (makeBtn) {
-    // remove してから attach して冪等に
-    makeBtn.replaceWith(makeBtn.cloneNode(true));
-    const fresh = document.querySelector('.make-song-btn');
-    fresh.addEventListener('click', onMakeSongClicked);
-  } else {
-    console.warn('[DBG] make-song-btn not found when attaching handlers');
-  }
-
-  // ダイアログのタップ等も同様に attach
-  const dialog = document.querySelector('.dialog-box');
-  if (dialog) {
-    dialog.addEventListener('click', onDialogClicked);
-  }
-  console.log('[DBG] attachUIEventHandlers done');
-}
-
-// 初期化エントリ（load 後に呼ぶ）
-function initUI() {
-  buildDOMIfNeeded();
-  // 次フレームでイベント登録して DOM が確実に反映された状態にする
-  requestAnimationFrame(() => {
-    attachUIEventHandlers();
-    // overlay があるか自動チェックしてログ出力
-    autoDetectOverlay();
-    console.log('[DBG] UI initialized and handlers attached');
-  });
-}
-
-// --- overlay 判定と一時無効化ユーティリティ ---
-function elementAtCenter() {
-  return document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-}
-
-function detectOverlayAt(x, y) {
-  const el = document.elementFromPoint(x, y);
-  if (!el) return null;
-  // ボタンやゲーム領域以外の要素が返るなら overlay の可能性
-  // ここでは簡易判定: ゲーム領域に属するクラス名を持たない要素を overlay とみなす
-  const allowedSelectors = ['.game-root', '.make-song-btn', '.dialog-box', 'canvas'];
-  const isAllowed = allowedSelectors.some(sel => el.closest && el.closest(sel));
-  return isAllowed ? null : el;
-}
-
-// 一時的に overlay の pointer-events を無効化して動作確認する
-function disableOverlayPointerEvents(el) {
-  if (!el) return;
-  const prev = el.style.pointerEvents;
-  el.style.pointerEvents = 'none';
-  el.dataset._dbg_prev_pointer = prev === undefined ? '' : prev;
-  console.log('[DBG] disabled pointer-events on', el);
-}
-
-// 元に戻す
-function restoreOverlayPointerEvents(el) {
-  if (!el || !el.dataset) return;
-  el.style.pointerEvents = el.dataset._dbg_prev_pointer || '';
-  delete el.dataset._dbg_prev_pointer;
-  console.log('[DBG] restored pointer-events on', el);
-}
-
-// 自動チェック: 画面中央で overlay を検出してログ出力
-function autoDetectOverlay() {
-  const x = window.innerWidth / 2;
-  const y = window.innerHeight / 2;
-  const overlay = detectOverlayAt(x, y);
-  if (overlay) {
-    console.warn('[DBG] overlay detected at center:', overlay, 'try disabling pointer-events to test');
-    // 開発時のみ自動で一時無効化（IS_DEV のみ）
-    if (IS_DEV) {
-      disableOverlayPointerEvents(overlay);
-      setTimeout(() => restoreOverlayPointerEvents(overlay), 3000);
+function saveGame() {
+    try {
+        const saveState = { ...playerState, readStories: Array.from(playerState.readStories) };
+        localStorage.setItem('world1_save', JSON.stringify(saveState));
+    } catch (e) {
+        errorIndicator.textContent = `❌ セーブエラー: ${e.message}`;
+        errorIndicator.style.display = 'block';
     }
-  } else {
-    console.log('[DBG] no overlay detected at center');
-  }
 }
 
-// --- デバッグ用ハードリセット（開発専用） ---
+function loadGame() {
+    const saved = localStorage.getItem('world1_save');
+    if (saved) {
+        try {
+            const loadedState = JSON.parse(saved);
+            loadedState.readStories = new Set(loadedState.readStories);
+            // 永続的なUIロック回避 (解決済み)
+            if (loadedState.uiState === 'STORY') {
+                loadedState.uiState = 'FREE';
+            }
+            return loadedState;
+        } catch (e) {
+             // JSONパースエラー時は初期値で開始
+             return null; 
+        }
+    }
+    return null;
+}
+
+// 🔴 恒久対策: ゲーム内から localStorage を強制リセット
 function hardResetFromGame() {
-  if (localStorage.getItem('debug_allow_reset') !== '1') {
-    console.warn('[DBG] hardReset blocked: debug flag not set');
-    return;
-  }
-  // 名前空間に基づいて消す（安全策）
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('save.') || k.startsWith('game.') || k === 'save.game');
-  keys.forEach(k => localStorage.removeItem(k));
-  console.log('[DBG] cleared keys:', keys);
-  // 強制リロードで初期状態へ
-  location.reload();
+    localStorage.removeItem('world1_save');
+    // 初期状態に戻る
+    playerState = { ...initialPlayerState };
+    playerState.readStories = new Set();
+    playerState.uiState = 'FREE';
+    // 強制リロード (最も確実)
+    location.reload(); 
 }
 
-// --- イベントハンドラの例（既存ロジックに合わせて置き換えてください） ---
-function onMakeSongClicked(e) {
-  console.log('[DBG] make song clicked', e);
-  // 既存の楽曲制作処理を呼ぶ
-  if (typeof handleMakeSong === 'function') handleMakeSong(e);
+
+// =================================================================
+// デバッグツールUIの構築 (新規)
+// =================================================================
+
+function buildDebugUI() {
+    if (!IS_DEBUG_MODE) return;
+    
+    // 1. デバッグ開閉ボタン
+    const debugButton = document.createElement('button');
+    debugButton.textContent = '⚙️ DEBUG';
+    debugButton.style.cssText = `
+        position: fixed; top: 10px; right: 10px; z-index: 999;
+        background: #4CAF50; color: white; border: none; padding: 5px 10px;
+        border-radius: 5px; cursor: pointer;
+    `;
+    
+    // 2. デバッグパネル
+    const debugPanel = document.createElement('div');
+    debugPanel.id = 'debug-panel';
+    debugPanel.style.cssText = `
+        position: fixed; top: 50px; right: 10px; z-index: 998;
+        background: rgba(0, 0, 0, 0.9); padding: 15px; border-radius: 5px;
+        color: white; width: 250px; display: none;
+        font-size: 12px;
+    `;
+
+    // 3. 状態表示エリア
+    const stateDisplay = document.createElement('p');
+    stateDisplay.id = 'debug-state';
+    stateDisplay.innerHTML = 'Status...';
+    debugPanel.appendChild(stateDisplay);
+
+    // 4. 強制リセットボタン
+    const resetButton = document.createElement('button');
+    resetButton.textContent = '☢️ 強制初期化 (データ削除)';
+    resetButton.style.cssText = 'background: #f44336; color: white; border: none; padding: 5px; margin-top: 10px; width: 100%; cursor: pointer;';
+    resetButton.addEventListener('click', hardResetFromGame);
+    debugPanel.appendChild(resetButton);
+
+    // 開閉ロジック
+    debugButton.addEventListener('click', () => {
+        const isVisible = debugPanel.style.display === 'block';
+        debugPanel.style.display = isVisible ? 'none' : 'block';
+        updateDebugPanel(); 
+    });
+
+    document.body.appendChild(debugButton);
+    document.body.appendChild(debugPanel);
 }
 
-function onDialogClicked(e) {
-  console.log('[DBG] dialog clicked', e);
-  if (typeof handleDialogClick === 'function') handleDialogClick(e);
+// デバッグパネルの状態を更新
+function updateDebugPanel() {
+    const stateDisplay = document.getElementById('debug-state');
+    if (stateDisplay) {
+        stateDisplay.innerHTML = `
+            ファン: ${formatNumber(playerState.fan)} (${playerState.fan})<br>
+            お金: $${formatNumber(playerState.money)} (${playerState.money})<br>
+            UI状態: ${playerState.uiState}<br>
+            Stage: ${playerState.stage}<br>
+            Read: ${playerState.readStories.size}
+        `;
+    }
 }
 
-// --- 起動シーケンス登録 ---
-window.addEventListener('load', () => {
-  // 1) セーブ読み込み（先に状態を確定）
-  loadGame();
-  // 2) UI 初期化（DOM 構築 → ハンドラ登録）
-  initUI();
-  // 3) 全体 pointer イベント到達ログ（開発時のみ）
-  if (IS_DEV) {
-    document.addEventListener('pointerdown', e => {
-      console.log('[DBG] pointerdown target:', e.target, 'x,y:', e.clientX, e.clientY);
-    }, { capture: true });
-  }
-});
+
+// ----------------------------------------------------------------
+// UIとステータスの更新 (デバッグパネル更新を追加)
+// ----------------------------------------------------------------
+function updateUI() {
+    // ... (既存のファン数、マネー表示更新ロジックは省略) ...
+    fanCountElement.textContent = formatNumber(playerState.fan);
+    moneyCountElement.textContent = formatNumber(playerState.money);
+    
+    // 🔴 デバッグパネルの状態も更新
+    updateDebugPanel(); 
+
+    // ... (既存のボタン無効化、ダイアログ表示ロジックは省略) ...
+}
+
+// ----------------------------------------------------------------
+// メインアクション ( try-catch を維持 )
+// ----------------------------------------------------------------
+function produceMusic() {
+    if (playerState.uiState !== 'FREE') {
+        return;
+    }
+    
+    // 🔴 try-catch で処理を囲み、エラーを画面に表示する
+    try {
+        playerState.fan += 100;
+        playerState.money += 5;
+        
+        checkStoryTriggers(); 
+
+        updateUI();
+        saveGame();
+        
+        errorIndicator.style.display = 'none';
+
+    } catch (e) {
+        errorIndicator.textContent = `❌ CRITICAL ERROR: ${e.message}`;
+        errorIndicator.style.display = 'block';
+        console.error("CRITICAL ERROR in produceMusic:", e);
+    }
+}
+
+// ... (他の関数は変更なし) ...
+
+// ----------------------------------------------------------------
+// 初期化とイベントリスナー (window.onload を維持)
+// ----------------------------------------------------------------
+
+function registerEventListeners() {
+    // ... (イベント登録はそのまま) ...
+    produceMusicButton.addEventListener('click', produceMusic);
+    produceMusicButton.addEventListener('touchstart', (e) => { e.preventDefault(); produceMusic(); });
+    dialogBox.addEventListener('click', advanceDialog);
+    dialogBox.addEventListener('touchstart', (e) => { e.preventDefault(); advanceDialog(); });
+}
+
+function checkInitialStory() { /* 省略 */ }
+
+
+window.onload = () => {
+    // 🔴 デバッグUIを構築
+    buildDebugUI(); 
+    
+    registerEventListeners();
+    checkInitialStory();
+    updateUI(); // 初回UI更新
+}
+
+// ... (formatNumber, advanceDialog, checkStoryTriggers など、その他の関数はそのまま) ...
