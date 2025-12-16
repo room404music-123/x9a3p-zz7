@@ -1,5 +1,5 @@
 // =================================================================
-// プレイヤーの状態と初期設定 (変更なし)
+// プレイヤーの状態と初期設定
 // =================================================================
 const initialPlayerState = {
     fan: 0,
@@ -10,18 +10,18 @@ const initialPlayerState = {
     readStories: new Set(),
 };
 
+// 🔴 常に初期状態から始めるため、loadGameは一度だけ実行
 let playerState = loadGame() || initialPlayerState;
 
-// DOM要素の取得
+// DOM要素の取得 (変更なし)
 const fanCountElement = document.getElementById('fan-count');
 const moneyCountElement = document.getElementById('money-count');
 const gameContainer = document.getElementById('game-container');
 const dialogBox = document.getElementById('dialog-box');
 const dialogTextElement = document.getElementById('dialog-text');
 const storyMarkerElement = document.getElementById('story-marker');
-// 🔴 ボタンの要素を明確に取得
 const produceMusicButton = document.getElementById('produce-music-button'); 
-const reincarnateButton = document.getElementById('reincarnate-button');
+const reincarnateButton = document.getElementById('reincarnate-button'); // 🔴 リセットボタンとして利用
 const inventoryUl = document.getElementById('inventory-ul');
 
 // =================================================================
@@ -41,7 +41,6 @@ const STORY_DATA = {
              saveGame();
         } }
     ],
-    // 🔴 デバッグ用: 制作が動いたか確認するための次のストーリーを追加 (ファン数500達成時)
     second_step: [
         { text: "いいね、初めての曲ができた。思ったよりファンが増えてるぞ。", speaker: "自分" },
         { text: "次はもっと本格的な機材がほしいな。", speaker: "自分" },
@@ -49,7 +48,6 @@ const STORY_DATA = {
     ]
 };
 
-// saveGame, loadGame は変更なし（前回の修正で安定済み）
 function saveGame() {
     const saveState = { ...playerState, readStories: Array.from(playerState.readStories) };
     localStorage.setItem('world1_save', JSON.stringify(saveState));
@@ -71,37 +69,45 @@ function loadGame() {
     return null;
 }
 
-// ----------------------------------------------------------------
-// UIとステータスの更新
-// ----------------------------------------------------------------
+// 🔴 修正: 全数値を初期化し、強制リロードする
+function resetGame() {
+    console.log("Game Reset initiated: Clearing state and localStorage.");
+    
+    // playerStateを初期状態のディープコピーで上書き
+    playerState = { ...initialPlayerState };
+    playerState.readStories = new Set();
+    playerState.uiState = 'FREE'; 
+    
+    localStorage.removeItem('world1_save');
+    
+    // UIを更新してから強制リロードし、クリーンな状態を保証
+    updateUI(); 
+    location.reload(); 
+}
 
+// ----------------------------------------------------------------
+// UIとステータスの更新 (変更なし)
+// ----------------------------------------------------------------
 function updateUI() {
     fanCountElement.textContent = formatNumber(playerState.fan);
     moneyCountElement.textContent = formatNumber(playerState.money);
     updateRoomView();
     updateInventoryUI();
-    // 🔴 ボタンの表示を制御する新しい関数を呼ぶ
     updateActionButtons(); 
     
     console.log(`Current UI State: ${playerState.uiState}`);
 
     const isLocked = playerState.uiState !== 'FREE';
 
-    // 🔴 楽曲制作ボタンのdisabledを制御
     produceMusicButton.disabled = isLocked;
 
     dialogBox.style.border = isLocked ? '2px solid #ffc107' : '2px solid #555';
     storyMarkerElement.style.display = isLocked ? 'block' : 'none';
 }
 
-// 🔴 新規追加: アクションボタンの表示/非表示を切り替える
 function updateActionButtons() {
-    // 楽曲制作ボタンは常に表示 (基本機能のため)
     produceMusicButton.style.display = 'block'; 
     produceMusicButton.textContent = "楽曲制作"; 
-
-    // 🔴 デバッグ用: ガチャボタンの表示は一旦スキップし、制作ボタン一本に絞る
-    // (ガチャボタンの制御ロジックは、制作ボタンと分離したUIにするときに実装する)
 }
 
 function updateRoomView() { /* 省略 */ }
@@ -120,7 +126,7 @@ function formatNumber(num) { /* 省略 */
 }
 
 // ----------------------------------------------------------------
-// メインアクション
+// メインアクション (変更なし)
 // ----------------------------------------------------------------
 
 function produceMusic() {
@@ -131,11 +137,9 @@ function produceMusic() {
     
     console.log(">>> produceMusic fired: Basic Production <<<");
 
-    // 🔴 基本ループ復旧: ファンとマネーの増加
     playerState.fan += 100;
     playerState.money += 5;
     
-    // 🔴 ストーリーチェックを挟む
     checkStoryTriggers(); 
 
     updateUI();
@@ -143,9 +147,8 @@ function produceMusic() {
 }
 
 // ----------------------------------------------------------------
-// ストーリーアクション
+// ストーリーアクション (変更なし)
 // ----------------------------------------------------------------
-
 function startStory(storyName) {
     if (playerState.uiState !== 'FREE') {
         console.warn("Attempted to start story while UI is locked.");
@@ -163,7 +166,6 @@ function startStory(storyName) {
 }
 
 function advanceDialog() {
-    /* 省略 - 処理は変更なし */
     console.log(`advanceDialog fired - Index: ${storyIndex}, UI State: ${playerState.uiState}`);
     
     if (playerState.uiState !== 'STORY') {
@@ -198,11 +200,10 @@ function advanceDialog() {
 }
 
 // ----------------------------------------------------------------
-// ストーリートリガーチェック (🔴 新規追加: 次のストーリー条件)
+// ストーリートリガーチェック (変更なし)
 // ----------------------------------------------------------------
 
 function checkStoryTriggers() {
-    // ファン数 500 で次のストーリーを発火させる
     if (playerState.fan >= 500 && !playerState.readStories.has('second_step')) {
        startStory('second_step');
        playerState.readStories.add('second_step');
@@ -211,13 +212,13 @@ function checkStoryTriggers() {
 
 
 // ----------------------------------------------------------------
-// 初期化とイベントリスナー (イベントリスナーのID確認)
+// 初期化とイベントリスナー (🔴 リセットボタンを一時的に有効化)
 // ----------------------------------------------------------------
 
 function checkInitialStory() {
     if (!playerState.readStories.has('initial')) {
         console.log("Initial story not read. Starting story.");
-        playerState.uiState = 'FREE'; // 念のため
+        playerState.uiState = 'FREE'; 
         startStory('initial');
         playerState.readStories.add('initial');
     } else {
@@ -233,20 +234,28 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUI();
     checkInitialStory();
     
-    // 🔴 楽曲制作ボタンにイベントリスナーを再登録
+    // 楽曲制作ボタン
     produceMusicButton.addEventListener('click', produceMusic);
     produceMusicButton.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
         produceMusic();
     });
 
+    // ダイアログボックス
     dialogBox.addEventListener('click', advanceDialog);
     dialogBox.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
         advanceDialog();
     });
 
-    reincarnateButton.style.display = 'none';
+    // 🔴 一時的なリセットボタンの有効化とイベント登録
+    reincarnateButton.style.display = 'block'; // ボタンを可視化
+    reincarnateButton.textContent = "[全数値リセット実行]"; // テキストを変更
+    reincarnateButton.addEventListener('click', resetGame);
+    reincarnateButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        resetGame(); // タッチでもリセットが走るようにする
+    });
 
     console.log("--- Initialization complete. Final State Check ---", {
         fan: playerState.fan,
